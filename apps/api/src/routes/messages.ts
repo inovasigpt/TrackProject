@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { eq, and } from 'drizzle-orm';
-import { db, messages } from '../db';
-import { authMiddleware } from '../middleware/auth';
+import { db, messages } from '../db/index.js';
+import { authMiddleware } from '../middleware/auth.js';
 
 const messageRoutes = new Hono();
 

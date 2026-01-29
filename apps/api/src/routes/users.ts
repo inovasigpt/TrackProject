@@ -1,8 +1,8 @@
 import { Hono } from 'hono';
 import { eq } from 'drizzle-orm';
-import { db, users, roles } from '../db';
-import { authMiddleware, adminMiddleware } from '../middleware/auth';
-import { hashPassword } from '../lib/auth';
+import { db, users, roles } from '../db/index.js';
+import { authMiddleware, adminMiddleware } from '../middleware/auth.js';
+import { hashPassword } from '../lib/auth.js';
 
 const userRoutes = new Hono();
 

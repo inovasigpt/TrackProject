@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { eq, or } from 'drizzle-orm';
-import { db, projects, phases, projectPics, users } from '../db';
-import { authMiddleware } from '../middleware/auth';
+import { db, projects, phases, projectPics, users } from '../db/index.js';
+import { authMiddleware } from '../middleware/auth.js';
 
 const projectRoutes = new Hono();
 
