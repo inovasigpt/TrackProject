@@ -1,0 +1,53 @@
+import 'dotenv/config';
+import { serve } from '@hono/node-server';
+import { Hono } from 'hono';
+import { cors } from 'hono/cors';
+import { logger } from 'hono/logger';
+import { handle } from 'hono/vercel';
+
+import authRoutes from './routes/auth';
+import projectRoutes from './routes/projects';
+import userRoutes from './routes/users';
+import messageRoutes from './routes/messages';
+import parametersRouter from './routes/parameters';
+
+const app = new Hono();
+
+// Middleware
+app.use('*', logger());
+app.use('*', cors({
+    origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:5176', 'http://localhost:3000'],
+    credentials: true,
+}));
+
+// Health check
+app.get('/', (c) => c.json({ status: 'ok', message: 'PMO API is running' }));
+
+// Routes
+app.route('/auth', authRoutes);
+app.route('/projects', projectRoutes);
+app.route('/users', userRoutes);
+app.route('/messages', messageRoutes);
+app.route('/parameters', parametersRouter);
+
+// Error handler
+app.onError((err, c) => {
+    console.error('Error:', err);
+    return c.json({ success: false, error: err.message }, 500);
+});
+
+// Start server
+
+// Start server (Local Development)
+const port = Number(process.env.PORT) || 3001;
+
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+    console.log(`🚀 Server running on http://localhost:${port}`);
+    serve({
+        fetch: app.fetch,
+        port,
+    });
+}
+
+// Export for Vercel
+export default handle(app);

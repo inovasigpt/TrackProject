@@ -97,3 +97,17 @@ pnpm dev
 1.  Checkout the `feature/fe-be-separation` branch.
 2.  Make your changes.
 3.  Commit and push to the repository.
+
+## ☁️ Deployment (Vercel)
+
+This Monorepo is configured for easy deployment on **Vercel**.
+
+1.  **Push to GitHub**: Ensure your latest code is on GitHub.
+2.  **Import Project**: Go to Vercel Dashboard > New Project > Import from GitHub.
+3.  **Framework Preset**: Vercel should automatically detect `Vite` for `apps/web`.
+4.  **Environment Variables**: Add your `.env` variables (DATABASE_URL, JWT_SECRET, etc.) in Vercel Project Settings.
+5.  **Deploy**: Click Deploy.
+
+The `vercel.json` file ensures:
+-   Frontend (`apps/web`) is served at `/`
+-   Backend (`apps/api`) is served at `/api` (Serverless Functions)
