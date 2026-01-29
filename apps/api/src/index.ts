@@ -16,7 +16,17 @@ const app = new Hono().basePath('/api');
 // Middleware
 app.use('*', logger());
 app.use('*', cors({
-    origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:5176', 'http://localhost:3000'],
+    origin: [
+        'http://localhost:5173',
+        'http://localhost:5174',
+        'http://localhost:5175',
+        'http://localhost:5176',
+        'http://localhost:3000',
+        'https://trackproject-ivory.vercel.app',
+        process.env.FRONTEND_URL || '',
+        process.env.VITE_VERCEL_URL || '',
+        process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : ''
+    ].filter(Boolean),
     credentials: true,
 }));
 
