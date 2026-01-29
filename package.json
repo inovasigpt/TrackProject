@@ -2,6 +2,7 @@
   "name": "pmo",
   "private": true,
   "version": "1.0.0",
+  "type": "module",
   "scripts": {
     "dev": "pnpm --parallel -r run dev",
     "dev:web": "pnpm --filter @pmo/web dev",
