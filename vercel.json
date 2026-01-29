@@ -10,7 +10,8 @@
         },
         {
             "source": "/(.*)",
-            "destination": "/apps/web/dist/index.html"
+            "destination": "/index.html"
         }
-    ]
+    ],
+    "outputDirectory": "apps/web/dist"
 }
