@@ -11,7 +11,7 @@ import userRoutes from './routes/users';
 import messageRoutes from './routes/messages';
 import parametersRouter from './routes/parameters';
 
-const app = new Hono();
+const app = new Hono().basePath('/api');
 
 // Middleware
 app.use('*', logger());
