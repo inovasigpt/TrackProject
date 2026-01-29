@@ -43,7 +43,7 @@ parametersRouter.post('/', async (c) => {
             color,
             order: order || '0',
             isActive: true,
-        }).returning();
+        } as any).returning();
 
         return c.json(newParameter, 201);
     } catch (error) {
@@ -66,7 +66,7 @@ parametersRouter.put('/:id', async (c) => {
                 color,
                 order,
                 isActive
-            })
+            } as any)
             .where(eq(parameters.id, id))
             .returning();
 
