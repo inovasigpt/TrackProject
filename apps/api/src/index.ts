@@ -3,7 +3,7 @@ import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
-import { handle } from 'hono/vercel';
+
 
 import authRoutes from './routes/auth';
 import projectRoutes from './routes/projects';
@@ -49,5 +49,5 @@ if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
     });
 }
 
-// Export for Vercel
-export default handle(app);
+// Export app for Vercel wrapper
+export default app;
