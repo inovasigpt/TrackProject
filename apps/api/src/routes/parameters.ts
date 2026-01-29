@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
-import { db } from '../db';
-import { parameters } from '../db/schema';
+import { db } from '../db/index.js';
+import { parameters } from '../db/schema.js';
 import { eq, and } from 'drizzle-orm';
 
 const parametersRouter = new Hono();

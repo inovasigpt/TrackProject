@@ -5,11 +5,11 @@ import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 
 
-import authRoutes from './routes/auth';
-import projectRoutes from './routes/projects';
-import userRoutes from './routes/users';
-import messageRoutes from './routes/messages';
-import parametersRouter from './routes/parameters';
+import authRoutes from './routes/auth.js';
+import projectRoutes from './routes/projects.js';
+import userRoutes from './routes/users.js';
+import messageRoutes from './routes/messages.js';
+import parametersRouter from './routes/parameters.js';
 
 const app = new Hono().basePath('/api');
 

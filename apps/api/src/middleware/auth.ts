@@ -1,5 +1,5 @@
 import { Context, Next } from 'hono';
-import { verifyToken, JWTPayload } from '../lib/auth';
+import { verifyToken, JWTPayload } from '../lib/auth.js';
 
 declare module 'hono' {
     interface ContextVariableMap {
