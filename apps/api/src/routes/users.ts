@@ -134,7 +134,7 @@ userRoutes.put('/admin/roles/:id/toggle', async (c) => {
         }
 
         const [updated] = await db.update(roles)
-            .set({ isActive: !role.isActive })
+            .set({ isActive: !role.isActive } as any)
             .where(eq(roles.id, id))
             .returning();
 

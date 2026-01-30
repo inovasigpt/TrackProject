@@ -86,7 +86,7 @@ parametersRouter.delete('/:id', async (c) => {
     const id = c.req.param('id');
     try {
         const [deletedParameter] = await db.update(parameters)
-            .set({ isActive: false })
+            .set({ isActive: false } as any) // Cast update payload to any
             .where(eq(parameters.id, id))
             .returning();
 

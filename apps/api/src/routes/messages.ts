@@ -29,7 +29,7 @@ messageRoutes.put('/:id/read', async (c) => {
         const user = c.get('user');
 
         const [updated] = await db.update(messages)
-            .set({ isRead: true })
+            .set({ isRead: true } as any)
             .where(and(eq(messages.id, id), eq(messages.userId, user.userId)))
             .returning();
 
