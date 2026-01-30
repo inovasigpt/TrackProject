@@ -46,20 +46,33 @@ auth.post('/register', async (c) => {
 
 // Login
 auth.post('/login', async (c) => {
+    console.log('[Login] Request received');
     try {
-        const { email, password } = await c.req.json();
+        const body = await c.req.json();
+        console.log('[Login] Body parsed', { email: body.email });
+        const { email, password } = body;
 
         // Find user
-        const [user] = await db.select().from(users)
+        console.log('[Login] Executing DB query...');
+        const startTime = Date.now();
+        const result = await db.select().from(users)
             .where(eq(users.email, email))
             .limit(1);
+        console.log('[Login] DB query finished', { duration: Date.now() - startTime, found: result.length > 0 });
+
+        const user = result[0];
 
         if (!user) {
+            console.log('[Login] User not found');
             return c.json({ success: false, error: 'Email atau password salah' }, 401);
         }
 
         // Verify password
+        console.log('[Login] Verifying password...');
+        const bcryptStart = Date.now();
         const isValid = await verifyPassword(password, user.password);
+        console.log('[Login] Password verified', { duration: Date.now() - bcryptStart, isValid });
+
         if (!isValid) {
             return c.json({ success: false, error: 'Email atau password salah' }, 401);
         }
