@@ -28,10 +28,12 @@ export const projects = pgTable('projects', {
     priority: text('priority').default('Medium').notNull(),
     status: text('status').default('Active').notNull(),
     description: text('description'),
+    stream: text('stream'),
     icon: text('icon'),
     notes: text('notes'),
     documents: json('documents'), // Store documents as JSON array
     archived: boolean('archived').default(false).notNull(),
+    createdBy: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
     createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -87,6 +89,30 @@ export type Project = typeof projects.$inferSelect;
 export type NewProject = typeof projects.$inferInsert;
 export type Phase = typeof phases.$inferSelect;
 export type NewPhase = typeof phases.$inferInsert;
-export type Message = typeof messages.$inferSelect;
 export type Parameter = typeof parameters.$inferSelect;
 export type NewParameter = typeof parameters.$inferInsert;
+
+import { relations } from 'drizzle-orm';
+
+// ... existing imports ...
+
+// Audit Logs table
+export const auditLogs = pgTable('audit_logs', {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
+    action: text('action').notNull(), // CREATE, UPDATE, DELETE, ARCHIVE
+    entityType: text('entity_type').notNull(), // PROJECT, PHASE
+    entityId: uuid('entity_id'),
+    details: text('details').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
+    user: one(users, {
+        fields: [auditLogs.userId],
+        references: [users.id],
+    }),
+}));
+
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type NewAuditLog = typeof auditLogs.$inferInsert;

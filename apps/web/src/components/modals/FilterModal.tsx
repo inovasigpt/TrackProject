@@ -22,9 +22,9 @@ const getColorHex = (colorName: string) => {
 };
 
 interface FilterState {
-    pics: string[];
     priorities: string[];
     statuses: string[];
+    streams: string[];
 }
 
 interface FilterModalProps {
@@ -33,41 +33,33 @@ interface FilterModalProps {
     projects: Project[];
     currentFilters?: FilterState;
     onApply: (filters: FilterState) => void;
+    statuses: Parameter[];
+    priorities: Parameter[];
+    streams: Parameter[];
 }
 
-const FilterModal: React.FC<FilterModalProps> = ({ isOpen, onClose, projects, currentFilters, onApply }) => {
+const FilterModal: React.FC<FilterModalProps> = ({
+    isOpen,
+    onClose,
+    projects,
+    currentFilters,
+    onApply,
+    statuses,
+    priorities,
+    streams
+}) => {
     const [filters, setFilters] = useState<FilterState>({
-        pics: [],
         priorities: [],
-        statuses: []
+        statuses: [],
+        streams: []
     });
-    const [availableStatuses, setAvailableStatuses] = useState<Parameter[]>([]);
-    const [availablePriorities, setAvailablePriorities] = useState<Parameter[]>([]);
 
-    // Get unique PICs from projects
-    const uniquePics = [...new Set(
-        projects.flatMap(p =>
-            p.pics ? p.pics.map(pic => pic.name) : p.pic ? [p.pic.name] : []
-        )
-    )].filter(Boolean);
 
-    // Load settings from API on open
+
+    // Sync local filters with currentFilters on open
     useEffect(() => {
-        const fetchParameters = async () => {
-            try {
-                const data = await api.getParameters();
-                setAvailableStatuses(data.filter((p: Parameter) => p.category === 'status'));
-                setAvailablePriorities(data.filter((p: Parameter) => p.category === 'priority'));
-            } catch (error) {
-                console.error('Failed to fetch parameters:', error);
-            }
-        };
-
-        if (isOpen) {
-            fetchParameters();
-            if (currentFilters) {
-                setFilters(currentFilters);
-            }
+        if (isOpen && currentFilters) {
+            setFilters(currentFilters);
         }
     }, [isOpen, currentFilters]);
 
@@ -98,13 +90,13 @@ const FilterModal: React.FC<FilterModalProps> = ({ isOpen, onClose, projects, cu
     };
 
     const handleReset = () => {
-        const emptyFilters = { pics: [], priorities: [], statuses: [] };
+        const emptyFilters = { priorities: [], statuses: [], streams: [] };
         setFilters(emptyFilters);
         onApply(emptyFilters);
         onClose();
     };
 
-    const hasActiveFilters = filters.pics.length > 0 || filters.priorities.length > 0 || filters.statuses.length > 0;
+    const hasActiveFilters = filters.priorities.length > 0 || filters.statuses.length > 0 || filters.streams.length > 0;
 
     if (!isOpen) return null;
 
@@ -122,7 +114,7 @@ const FilterModal: React.FC<FilterModalProps> = ({ isOpen, onClose, projects, cu
                                 Filter Proyek
                             </h3>
                             <p className="text-slate-500 text-[10px] uppercase font-bold tracking-tighter">
-                                Filter berdasarkan PIC, Priority, Status
+                                Filter berdasarkan Priority, Status, Stream
                             </p>
                         </div>
                     </div>
@@ -136,37 +128,13 @@ const FilterModal: React.FC<FilterModalProps> = ({ isOpen, onClose, projects, cu
 
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-5">
-                    {/* PIC Filter */}
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">
-                            PIC
-                        </label>
-                        <div className="flex flex-wrap gap-2">
-                            {uniquePics.length > 0 ? (uniquePics as string[]).map(pic => (
-                                <button
-                                    key={pic}
-                                    onClick={() => toggleFilter('pics', pic)}
-                                    className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors flex items-center gap-1.5 ${filters.pics.includes(pic)
-                                        ? 'bg-purple-500 text-white'
-                                        : 'bg-[#020617] border border-[#1e293b] text-slate-400 hover:border-purple-500/50'
-                                        }`}
-                                >
-                                    {filters.pics.includes(pic) && <Check size={12} />}
-                                    {pic}
-                                </button>
-                            )) : (
-                                <span className="text-[10px] text-slate-600 italic">Tidak ada PIC tersedia</span>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Priority Filter - from settings */}
+                    {/* Priority Filter */}
                     <div className="space-y-2">
                         <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">
                             Priority
                         </label>
                         <div className="flex flex-wrap gap-2">
-                            {availablePriorities.map(priority => {
+                            {priorities.map(priority => {
                                 const isSelected = filters.priorities.includes(priority.label);
                                 return (
                                     <button
@@ -187,13 +155,13 @@ const FilterModal: React.FC<FilterModalProps> = ({ isOpen, onClose, projects, cu
                         </div>
                     </div>
 
-                    {/* Status Filter - from settings */}
+                    {/* Status Filter */}
                     <div className="space-y-2">
                         <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">
                             Status
                         </label>
                         <div className="flex flex-wrap gap-2">
-                            {availableStatuses.map(status => {
+                            {statuses.map(status => {
                                 const isSelected = filters.statuses.includes(status.label);
                                 return (
                                     <button
@@ -208,6 +176,33 @@ const FilterModal: React.FC<FilterModalProps> = ({ isOpen, onClose, projects, cu
                                     >
                                         {isSelected && <Check size={12} />}
                                         {status.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Stream Filter */}
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">
+                            Stream
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                            {streams.map(stream => {
+                                const isSelected = filters.streams.includes(stream.label);
+                                return (
+                                    <button
+                                        key={stream.id}
+                                        onClick={() => toggleFilter('streams', stream.label)}
+                                        className="px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors flex items-center gap-1.5"
+                                        style={{
+                                            backgroundColor: isSelected ? getColorHex(stream.color) : '#020617',
+                                            color: isSelected ? 'white' : '#94a3b8',
+                                            border: isSelected ? 'none' : '1px solid #1e293b'
+                                        }}
+                                    >
+                                        {isSelected && <Check size={12} />}
+                                        {stream.label}
                                     </button>
                                 );
                             })}

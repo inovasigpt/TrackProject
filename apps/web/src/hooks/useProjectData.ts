@@ -1,47 +1,62 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { api } from '../services/api';
-import type { Project, Message } from '@pmo/shared';
+import type { Project, Message, Parameter } from '../types';
 
 /**
- * Custom hook for persisting projects and messages via API
- * (Kept name as useLocalStorage for backward compatibility during migration)
+ * Custom hook for persisting projects, messages, and parameters via API
+ * Replaces the old useLocalStorage hook.
  */
-export const useLocalStorage = () => {
+export const useProjectData = () => {
     const [projects, setProjects] = useState<Project[]>([]);
     const [messages, setMessages] = useState<Message[]>([]);
+    const [parameters, setParameters] = useState<Parameter[]>([]);
     const [isLoaded, setIsLoaded] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    // Data fetching function
+    const fetchData = useCallback(async () => {
+        try {
+            // Fetch projects
+            const projectsRes = await api.getProjects();
+            if (projectsRes.success && projectsRes.data) {
+                setProjects(projectsRes.data);
+            }
+
+            // Fetch messages
+            const messagesRes = await api.getMessages();
+            if (messagesRes.success && messagesRes.data) {
+                setMessages(messagesRes.data);
+            }
+
+            // Fetch parameters
+            const paramsData = await api.getParameters();
+            if (Array.isArray(paramsData)) {
+                setParameters(paramsData);
+            }
+
+        } catch (err) {
+            console.error('Failed to fetch data:', err);
+            setError('Gagal memuat data dari server');
+        } finally {
+            setIsLoaded(true);
+        }
+    }, []);
+
     // Initial fetch
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                // Fetch projects
-                const projectsRes = await api.getProjects();
-                if (projectsRes.success && projectsRes.data) {
-                    setProjects(projectsRes.data);
-                }
-
-                // Fetch messages
-                const messagesRes = await api.getMessages();
-                if (messagesRes.success && messagesRes.data) {
-                    setMessages(messagesRes.data);
-                }
-            } catch (err) {
-                console.error('Failed to fetch data:', err);
-                setError('Gagal memuat data dari server');
-            } finally {
-                setIsLoaded(true);
-            }
-        };
-
         // Only fetch if authenticated (token exists)
         if (api.getToken()) {
             fetchData();
         } else {
             setIsLoaded(true);
         }
-    }, []);
+    }, [fetchData]);
+
+    // Derived state for parameters
+    const statuses = useMemo(() => parameters.filter(p => p.category === 'status'), [parameters]);
+    const priorities = useMemo(() => parameters.filter(p => p.category === 'priority'), [parameters]);
+    const phases = useMemo(() => parameters.filter(p => p.category === 'phase'), [parameters]);
+    const streams = useMemo(() => parameters.filter(p => p.category === 'stream'), [parameters]);
 
     const addProject = useCallback(async (projectData: any) => {
         try {
@@ -81,9 +96,9 @@ export const useLocalStorage = () => {
                         if (p.id === projectId) {
                             return {
                                 ...p,
-                                phases: p.phases.map(phase =>
+                                phases: p.phases?.map((phase: any) =>
                                     phase.id === phaseId ? response.data : phase
-                                )
+                                ) || []
                             };
                         }
                         return p;
@@ -131,6 +146,11 @@ export const useLocalStorage = () => {
     return {
         projects,
         messages,
+        parameters,
+        statuses,
+        priorities,
+        phases,
+        streams,
         unreadCount,
         isLoaded,
         error,
@@ -139,5 +159,6 @@ export const useLocalStorage = () => {
         updatePhase,
         deleteProject,
         markMessageAsRead,
+        refreshProjects: fetchData,
     };
 };

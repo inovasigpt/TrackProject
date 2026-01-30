@@ -80,6 +80,9 @@ interface SidebarProps {
     sortBy?: string;
     onSortChange: (sortId: string) => void;
     scrollRef?: React.RefObject<HTMLDivElement | null>;
+    statuses: any[];
+    priorities: any[];
+    streams: any[];
 }
 
 const Sidebar = ({
@@ -92,14 +95,17 @@ const Sidebar = ({
     hasActiveFilters = false,
     sortBy = 'code_asc',
     onSortChange,
-    scrollRef
+    scrollRef,
+    statuses,
+    priorities,
+    streams
 }: SidebarProps) => {
     const BAR_HEIGHT = 36;
     const ROW_PADDING = 12;
     const BASE_TOP_OFFSET = 10;
 
-    const [statuses, setStatuses] = useState<any[]>([]);
-    const [priorities, setPriorities] = useState<any[]>([]);
+
+
     const [showSortDropdown, setShowSortDropdown] = useState(false);
     const sortDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -110,20 +116,6 @@ const Sidebar = ({
         { id: 'priority_low', label: 'Priority Low-High' },
         { id: 'status', label: 'Status' },
     ];
-
-    // Load settings from API
-    useEffect(() => {
-        const fetchParameters = async () => {
-            try {
-                const data = await api.getParameters();
-                setStatuses(data.filter((p: any) => p.category === 'status'));
-                setPriorities(data.filter((p: any) => p.category === 'priority'));
-            } catch (error) {
-                console.error('Failed to fetch params:', error);
-            }
-        };
-        fetchParameters();
-    }, []);
 
     // Close sort dropdown when clicking outside
     useEffect(() => {
@@ -169,6 +161,23 @@ const Sidebar = ({
             borderColor: '#3b82f680',
             color: '#3b82f6',
             backgroundColor: '#3b82f61a'
+        };
+    };
+
+    // Get style for stream based on settings
+    const getStreamStyle = (streamLabel: string) => {
+        const stream = streams.find(s => s.label.toLowerCase() === streamLabel?.toLowerCase());
+        if (stream) {
+            return {
+                borderColor: `${getColorHex(stream.color)}80`,
+                color: getColorHex(stream.color),
+                backgroundColor: `${getColorHex(stream.color)}1a`
+            };
+        }
+        return {
+            borderColor: '#06b6d480',
+            color: '#06b6d4',
+            backgroundColor: '#06b6d41a'
         };
     };
 
@@ -321,6 +330,15 @@ const Sidebar = ({
                                             >
                                                 {(project.priority || 'Medium').toUpperCase()}
                                             </span>
+                                            {/* Stream Badge */}
+                                            {project.stream && (
+                                                <span
+                                                    className="text-[8px] font-black px-1.5 py-0.5 rounded border"
+                                                    style={getStreamStyle(project.stream)}
+                                                >
+                                                    {project.stream.toUpperCase()}
+                                                </span>
+                                            )}
                                             {/* Status Badge */}
                                             <span
                                                 className="text-[8px] font-black px-1.5 py-0.5 rounded border"

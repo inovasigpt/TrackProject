@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     Lock,
     Mail,
@@ -12,12 +12,21 @@ import {
     UserPlus,
     ChevronDown
 } from 'lucide-react';
-import type { Role } from '@pmo/shared';
+import type { Role } from '../types';
+import api from '../services/api';
 
 interface RegisterPageProps {
     onRegister: (userData: { username: string; email: string; password: string; role: string }) => any;
     onBack: () => void;
     roles?: Role[];
+}
+
+interface ValidationErrors {
+    username?: string;
+    email?: string;
+    password?: string;
+    confirmPassword?: string;
+    general?: string;
 }
 
 const RegisterPage: React.FC<RegisterPageProps> = ({ onRegister, onBack, roles = [] }) => {
@@ -30,12 +39,32 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onRegister, onBack, roles =
         confirmPassword: '',
         role: roles.length > 0 ? roles[0].value : 'user'
     });
-    const [errors, setErrors] = useState({});
+    const [errors, setErrors] = useState<ValidationErrors>({});
     const [isLoading, setIsLoading] = useState(false);
     const [success, setSuccess] = useState(false);
+    const [fetchedRoles, setFetchedRoles] = useState<Role[]>([]);
+
+    useEffect(() => {
+        const fetchRoles = async () => {
+            try {
+                const data = await api.getParameters('role');
+                if (data) {
+                    setFetchedRoles(data.map((r: any) => ({ label: r.label, value: r.value })));
+                    if (data.length > 0 && !formData.role) {
+                        setFormData(prev => ({ ...prev, role: data[0].value }));
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to fetch roles:', error);
+            }
+        };
+        fetchRoles();
+    }, []);
+
+    const activeRoles = roles.length > 0 ? roles : fetchedRoles;
 
     const validate = () => {
-        const newErrors = {};
+        const newErrors: ValidationErrors = {};
 
         if (!formData.username) {
             newErrors.username = 'Username wajib diisi';
@@ -211,7 +240,7 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onRegister, onBack, roles =
                                 value={formData.role}
                                 onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                             >
-                                {roles.length > 0 ? roles.map(role => (
+                                {activeRoles.length > 0 ? activeRoles.map(role => (
                                     <option key={role.value} value={role.value} className="bg-[#0f172a]">
                                         {role.label}
                                     </option>

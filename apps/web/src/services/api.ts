@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:3001/api');
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
@@ -187,6 +187,9 @@ class ApiClient {
         return this.request<{ message: string }>(`/parameters/${id}`, {
             method: 'DELETE',
         });
+    }
+    async getAuditLogs() {
+        return this.request('/audit');
     }
 }
 

@@ -1,6 +1,7 @@
 // Centralized TypeScript Types for PMO Application
 
 export interface Pic {
+    id?: string; // User ID if linked to a system user
     name: string;
     role?: string;
     avatar?: string;
@@ -23,6 +24,7 @@ export interface Project {
     id: string;
     name: string;
     code: string;
+    stream?: string;
     icon?: string;
     description?: string;
     priority?: string;
@@ -33,6 +35,8 @@ export interface Project {
     documents?: Document[];
     notes?: string;
     archived?: boolean;
+    createdBy?: string;
+    createdAt?: string;
 }
 
 export interface Parameter {

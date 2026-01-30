@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { eq, or } from 'drizzle-orm';
 import { db, projects, phases, projectPics, users } from '../db/index.js';
 import { authMiddleware } from '../middleware/auth.js';
+import { auditService } from '../services/auditService.js';
 
 const projectRoutes = new Hono();
 
@@ -11,7 +12,29 @@ projectRoutes.use('*', authMiddleware);
 // Get all projects
 projectRoutes.get('/', async (c) => {
     try {
-        const allProjects = await db.select().from(projects);
+        const user = c.get('user');
+        const userId = user?.userId;
+        const role = user?.role;
+
+        let allProjects;
+
+        if (role === 'admin') {
+            allProjects = await db.select().from(projects);
+        } else {
+            // For non-admins: Created by user OR User is a PIC
+            // We use a left join to check for PIC assignment
+            const rows = await db.select({ project: projects })
+                .from(projects)
+                .leftJoin(projectPics, eq(projects.id, projectPics.projectId))
+                .where(
+                    or(
+                        eq(projects.createdBy, userId),
+                        eq(projectPics.userId, userId)
+                    )
+                )
+                .groupBy(projects.id);
+            allProjects = rows.map(r => r.project);
+        }
 
         // Get phases and pics for each project
         const projectsWithData = await Promise.all(
@@ -50,7 +73,7 @@ projectRoutes.get('/', async (c) => {
 projectRoutes.post('/', async (c) => {
     try {
         const body = await c.req.json();
-        const { code, name, priority, status, description, icon, notes, pics: picsList, phases: phasesList } = body;
+        const { code, name, priority, status, stream, description, icon, notes, pics: picsList, phases: phasesList } = body;
 
         // Create project
         const [newProject] = await db.insert(projects).values({
@@ -58,10 +81,12 @@ projectRoutes.post('/', async (c) => {
             name,
             priority: priority || 'Medium',
             status: status || 'Active',
+            stream,
             description,
             icon,
             notes,
             documents: body.documents || [],
+            createdBy: c.get('user')?.userId,
         } as any).returning();
 
 
@@ -98,6 +123,16 @@ projectRoutes.post('/', async (c) => {
             ).returning();
         }
 
+        // Audit Log
+        const user = c.get('user');
+        await auditService.log(
+            user?.userId,
+            'CREATE',
+            'PROJECT',
+            newProject.id,
+            `Project "${newProject.name}" created (Status: ${newProject.status}, Priority: ${newProject.priority}, Stream: ${stream || '-'})`
+        );
+
         return c.json({
             success: true,
             data: {
@@ -118,7 +153,20 @@ projectRoutes.put('/:id', async (c) => {
     try {
         const id = c.req.param('id');
         const body = await c.req.json();
-        const { code, name, priority, status, archived, description, icon, notes, pics: picsList, phases: phasesList, documents } = body;
+        const { code, name, priority, status, stream, archived, description, icon, notes, pics: picsList, phases: phasesList, documents } = body;
+
+        // Fetch existing project to check for status changes and permissions
+        const [existingProject] = await db.select().from(projects).where(eq(projects.id, id));
+
+        if (!existingProject) {
+            return c.json({ success: false, error: 'Project not found' }, 404);
+        }
+
+        const user = c.get('user');
+        // Permission Check: Admin OR Creator
+        if (user.role !== 'admin' && existingProject.createdBy !== user.userId) {
+            return c.json({ success: false, error: 'Unauthorized: Only Admin or Creator can edit this project' }, 403);
+        }
 
         // 1. Update project details
         const [updated] = await db.update(projects)
@@ -127,6 +175,7 @@ projectRoutes.put('/:id', async (c) => {
                 name,
                 priority,
                 status,
+                stream,
                 archived,
                 description,
                 icon,
@@ -184,6 +233,30 @@ projectRoutes.put('/:id', async (c) => {
             .leftJoin(users, or(eq(projectPics.userId, users.id), eq(projectPics.name, users.username)))
             .where(eq(projectPics.projectId, id));
 
+
+        // Audit Log
+        // Audit Log
+        let action = 'UPDATE';
+        let detail = `Project "${updated.name}" updated (Status: ${updated.status}, Priority: ${updated.priority}, Stream: ${stream || '-'})`;
+
+        if (archived !== undefined && existingProject && archived !== existingProject.archived) {
+            if (archived) {
+                action = 'ARCHIVE';
+                detail = `Project "${updated.name}" archived`;
+            } else {
+                action = 'UNARCHIVE'; // Or just UPDATE with detail
+                detail = `Project "${updated.name}" unarchived`;
+            }
+        }
+
+        await auditService.log(
+            user?.userId,
+            action,
+            'PROJECT',
+            id,
+            detail
+        );
+
         return c.json({
             success: true,
             data: {
@@ -214,6 +287,26 @@ projectRoutes.put('/:projectId/phases/:phaseId', async (c) => {
             .where(eq(phases.id, phaseId))
             .returning();
 
+        // Fetch Project Name
+        const projectId = c.req.param('projectId');
+        const [project] = await db.select().from(projects).where(eq(projects.id, projectId));
+
+        // Format dates
+        const formatDate = (d: Date | null) => d ? d.toISOString().split('T')[0] : '-';
+        const dateInfo = updated.startDate || updated.endDate
+            ? ` (Start: ${formatDate(updated.startDate)}, End: ${formatDate(updated.endDate)})`
+            : '';
+
+        // Audit Log
+        const user = c.get('user');
+        await auditService.log(
+            user?.userId,
+            'UPDATE',
+            'PHASE',
+            phaseId,
+            `Phase "${updated.name}" in Project "${project?.name || 'Unknown'}" updated${dateInfo} (Progress: ${updated.progress}%)`
+        );
+
         return c.json({ success: true, data: updated });
     } catch (error) {
         console.error('Update phase error:', error);
@@ -224,8 +317,29 @@ projectRoutes.put('/:projectId/phases/:phaseId', async (c) => {
 // Delete project
 projectRoutes.delete('/:id', async (c) => {
     try {
+        const user = c.get('user');
+        // Permission Check: Admin ONLY
+        if (user.role !== 'admin') {
+            return c.json({ success: false, error: 'Unauthorized: Only Admin can delete projects' }, 403);
+        }
+
         const id = c.req.param('id');
+        // Get project name for log before delete? Or just ID. 
+        // For simplicity, just log ID or fetch first. 
+        // Let's fetch name first for better log
+        const [project] = await db.select().from(projects).where(eq(projects.id, id));
+
         await db.delete(projects).where(eq(projects.id, id));
+
+
+        await auditService.log(
+            user?.userId,
+            'DELETE',
+            'PROJECT',
+            id,
+            `Project "${project?.name || id}" deleted`
+        );
+
         return c.json({ success: true, message: 'Project deleted' });
     } catch (error) {
         console.error('Delete project error:', error);

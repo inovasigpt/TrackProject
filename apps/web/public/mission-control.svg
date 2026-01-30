@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Top Left: Blue #4285F4 -->
+  <rect x="2" y="2" width="9" height="9" rx="2" fill="#4285F4" stroke="none" />
+  
+  <!-- Top Right: Red #DB4437 -->
+  <rect x="13" y="2" width="9" height="9" rx="2" fill="#DB4437" stroke="none" />
+  
+  <!-- Bottom Left: Yellow #F4B400 -->
+  <rect x="2" y="13" width="9" height="9" rx="2" fill="#F4B400" stroke="none" />
+  
+  <!-- Bottom Right: Green #0F9D58 -->
+  <rect x="13" y="13" width="9" height="9" rx="2" fill="#0F9D58" stroke="none" />
+</svg>

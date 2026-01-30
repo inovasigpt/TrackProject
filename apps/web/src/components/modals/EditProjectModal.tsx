@@ -31,7 +31,7 @@ const TABS = [
 
 const EditProjectModal: React.FC<EditProjectModalProps> = ({ project, isOpen, onClose, onSubmit }) => {
     const [activeTab, setActiveTab] = useState('info');
-    const [formData, setFormData] = useState({ code: '', description: '', priority: 'Medium', status: 'On Track', icon: 'database' });
+    const [formData, setFormData] = useState({ code: '', description: '', priority: 'Medium', status: 'On Track', stream: '', icon: 'database' });
     const [pics, setPics] = useState<Pic[]>([]);
     const [phases, setPhases] = useState<any[]>([]);
     const [documents, setDocuments] = useState<Document[]>([]);
@@ -42,6 +42,7 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({ project, isOpen, on
     const [availableUsers, setAvailableUsers] = useState<any[]>([]);
     const [availableStatuses, setAvailableStatuses] = useState<any[]>([]);
     const [availablePriorities, setAvailablePriorities] = useState<any[]>([]);
+    const [availableStreams, setAvailableStreams] = useState<any[]>([]);
 
     useEffect(() => {
         const initializeModal = async () => {
@@ -59,7 +60,10 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({ project, isOpen, on
                     setAvailablePhases(phasesParams);
                     setAvailableRoles(data.filter((p: any) => p.category === 'role').map((r: any) => r.label));
                     setAvailableStatuses(data.filter((p: any) => p.category === 'status'));
+                    setAvailableRoles(data.filter((p: any) => p.category === 'role').map((r: any) => r.label));
+                    setAvailableStatuses(data.filter((p: any) => p.category === 'status'));
                     setAvailablePriorities(data.filter((p: any) => p.category === 'priority'));
+                    setAvailableStreams(data.filter((p: any) => p.category === 'stream'));
 
                     // Initialize Form
                     setActiveTab('info');
@@ -68,6 +72,7 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({ project, isOpen, on
                         description: project.description || '',
                         priority: project.priority || 'Medium',
                         status: project.status || 'On Track',
+                        stream: project.stream || '',
                         icon: project.icon || 'database',
                     });
 
@@ -76,12 +81,13 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({ project, isOpen, on
                             // Robustness: If API didn't return role (e.g. unlinked legacy data), try to find user by name
                             const foundUser = usersData.success ? usersData.data.find((u: any) => u.username === p.name) : null;
                             return {
+                                id: p.id || foundUser?.id, // Preserve ID
                                 name: p.name,
                                 role: p.role || foundUser?.role || 'Developer',
                                 avatar: p.avatar || foundUser?.avatar
                             };
                         })
-                        : project.pic ? [{ name: project.pic.name, role: project.pic.role || 'Developer', avatar: project.pic.avatar }] : [{ name: '', role: 'Developer' }];
+                        : project.pic ? [{ id: project.pic.id, name: project.pic.name, role: project.pic.role || 'Developer', avatar: project.pic.avatar }] : [{ name: '', role: 'Developer' }];
                     setPics(projectPics);
 
                     setPhases(project.phases?.map(p => {
@@ -125,7 +131,7 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({ project, isOpen, on
         if (field === 'name') {
             const selectedUser = availableUsers.find(u => u.username === value);
             if (selectedUser) {
-                n[i] = { ...n[i], name: value, role: selectedUser.role || n[i].role, avatar: selectedUser.avatar };
+                n[i] = { ...n[i], id: selectedUser.id, name: value, role: selectedUser.role || n[i].role, avatar: selectedUser.avatar };
             } else {
                 n[i] = { ...n[i], [field]: value };
             }
@@ -197,6 +203,7 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({ project, isOpen, on
                 description: formData.description,
                 priority: formData.priority,
                 status: formData.status,
+                stream: formData.stream,
                 icon: formData.icon,
                 pics: validPics,
                 pic: validPics[0] || project.pic,
@@ -262,6 +269,17 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({ project, isOpen, on
                                         <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Kode Proyek</label>
                                         <input type="text" value={formData.code} onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                                             className="w-full bg-[#020617] border border-[#1e293b] rounded-xl px-4 py-3 text-xs text-white font-mono focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Stream</label>
+                                        <div className="relative">
+                                            <select value={formData.stream} onChange={(e) => setFormData({ ...formData, stream: e.target.value })}
+                                                className="w-full bg-[#020617] border border-[#1e293b] rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 appearance-none cursor-pointer">
+                                                <option value="">Pilih Stream...</option>
+                                                {availableStreams.map(opt => <option key={opt.id} value={opt.label}>{opt.label}</option>)}
+                                            </select>
+                                            <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+                                        </div>
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Status</label>

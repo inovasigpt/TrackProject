@@ -46,6 +46,7 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({ isOpen, onClose, onSu
     const [formData, setFormData] = useState({
         name: '',
         code: '',
+        stream: '',
         description: '',
         priority: 'Medium',
         icon: 'database',
@@ -60,6 +61,7 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({ isOpen, onClose, onSu
     const [availableRoles, setAvailableRoles] = useState<string[]>([]);
     const [availableUsers, setAvailableUsers] = useState<any[]>([]);
     const [availablePriorities, setAvailablePriorities] = useState<any[]>([]);
+    const [availableStreams, setAvailableStreams] = useState<any[]>([]);
     const [showValidationModal, setShowValidationModal] = useState(false);
     const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
@@ -75,10 +77,12 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({ isOpen, onClose, onSu
                 const fetchedPhases = data.filter((p: any) => p.category === 'phase');
                 const fetchedRoles = data.filter((p: any) => p.category === 'role').map((r: any) => r.label);
                 const fetchedPriorities = data.filter((p: any) => p.category === 'priority');
+                const fetchedStreams = data.filter((p: any) => p.category === 'stream');
 
                 setAvailablePhases(fetchedPhases);
                 setAvailableRoles(fetchedRoles);
                 setAvailablePriorities(fetchedPriorities);
+                setAvailableStreams(fetchedStreams);
 
                 // Initialize default PIC role if available
                 if (fetchedRoles.length > 0) {
@@ -104,6 +108,7 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({ isOpen, onClose, onSu
             setFormData({
                 name: '',
                 code: '',
+                stream: '',
                 description: '',
                 priority: 'Medium',
                 icon: 'database',
@@ -236,6 +241,7 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({ isOpen, onClose, onSu
             id: Date.now().toString(),
             name: formData.name,
             code: formData.code.toUpperCase(),
+            stream: formData.stream,
             status: 'On Track',
             priority: formData.priority,
             description: formData.description,
@@ -319,6 +325,21 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({ isOpen, onClose, onSu
                                                 className={`w-full bg-[#020617] border rounded-xl px-4 py-3 text-xs text-white font-mono focus:outline-none focus:ring-2 focus:ring-[#26b9f7]/50 transition-all placeholder:text-slate-700 ${errors.code ? 'border-rose-500' : 'border-[#1e293b]'}`}
                                             />
                                             {errors.code && <p className="text-[9px] text-rose-400">{errors.code}</p>}
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest block">Stream</label>
+                                        <div className="relative">
+                                            <select
+                                                value={formData.stream}
+                                                onChange={(e) => setFormData({ ...formData, stream: e.target.value })}
+                                                className="w-full bg-[#020617] border border-[#1e293b] rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:ring-2 focus:ring-[#26b9f7]/50 appearance-none cursor-pointer"
+                                            >
+                                                <option value="">Pilih Stream...</option>
+                                                {availableStreams.map(opt => <option key={opt.id} value={opt.label}>{opt.label}</option>)}
+                                            </select>
+                                            <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
                                         </div>
                                     </div>
 

@@ -10,6 +10,7 @@ import projectRoutes from './routes/projects.js';
 import userRoutes from './routes/users.js';
 import messageRoutes from './routes/messages.js';
 import parametersRouter from './routes/parameters.js';
+import auditRoutes from './routes/audit.js';
 
 const app = new Hono().basePath('/api');
 
@@ -70,6 +71,7 @@ app.route('/projects', projectRoutes);
 app.route('/users', userRoutes);
 app.route('/messages', messageRoutes);
 app.route('/parameters', parametersRouter);
+app.route('/audit', auditRoutes);
 
 // Error handler
 app.onError((err, c) => {

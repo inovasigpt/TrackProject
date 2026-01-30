@@ -24,34 +24,24 @@ interface DailyOverviewSlideOverProps {
     isOpen: boolean;
     onClose: () => void;
     projects: Project[];
+    phases: Parameter[];
+    statuses: Parameter[];
+    priorities: Parameter[];
 }
 
 interface ProjectWithPhase extends Project {
     todayPhase?: any; // Avoiding circular dependency or complex import issues, casting explicitly
 }
 
-const DailyOverviewSlideOver: React.FC<DailyOverviewSlideOverProps> = ({ isOpen, onClose, projects }) => {
-    const [phases, setPhases] = useState<Parameter[]>([]);
-    const [statuses, setStatuses] = useState<Parameter[]>([]);
-    const [priorities, setPriorities] = useState<Parameter[]>([]);
-
-    useEffect(() => {
-        const fetchParameters = async () => {
-            if (isOpen) {
-                try {
-                    const data = await api.getParameters();
-                    setPhases(data.filter((p: Parameter) => p.category === 'phase'));
-                    setStatuses(data.filter((p: Parameter) => p.category === 'status'));
-                    setPriorities(data.filter((p: Parameter) => p.category === 'priority'));
-                } catch (error) {
-                    console.error('Failed to fetch params:', error);
-                }
-            }
-        };
-        fetchParameters();
-    }, [isOpen]);
-
-    // Helpers using fetched data
+const DailyOverviewSlideOver: React.FC<DailyOverviewSlideOverProps> = ({
+    isOpen,
+    onClose,
+    projects,
+    phases,
+    statuses,
+    priorities
+}) => {
+    // Helpers using passed props
     const getPhaseLabel = (phaseId: string) => phases.find(p => p.id === phaseId)?.label || phaseId;
     const getPhaseColor = (phaseId: string) => phases.find(p => p.id === phaseId)?.color || 'slate';
 

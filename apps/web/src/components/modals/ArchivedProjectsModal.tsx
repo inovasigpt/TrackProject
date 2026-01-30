@@ -9,6 +9,8 @@ interface ArchivedProjectsModalProps {
     archivedProjects: Project[];
     onUnarchive: (project: Project) => void;
     onDeletePermanently: (id: string) => void;
+    currentUser?: any;
+    users?: any[];
 }
 
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -16,7 +18,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
     server: Server, shield: Shield, zap: Zap, cloud: Cloud, code: Code,
 };
 
-const ArchivedProjectsModal: React.FC<ArchivedProjectsModalProps> = ({ isOpen, onClose, archivedProjects, onUnarchive, onDeletePermanently }) => {
+const ArchivedProjectsModal: React.FC<ArchivedProjectsModalProps> = ({ isOpen, onClose, archivedProjects, onUnarchive, onDeletePermanently, currentUser, users = [] }) => {
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
     const [activeTab, setActiveTab] = useState('info');
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -99,25 +101,30 @@ const ArchivedProjectsModal: React.FC<ArchivedProjectsModalProps> = ({ isOpen, o
                             project={selectedProject as any}
                             activeTab={activeTab}
                             setActiveTab={setActiveTab}
+                            users={users}
                         />
 
                         {/* Action Footer */}
                         <div className="p-4 border-t border-[#1e293b] flex gap-3 shrink-0">
-                            <button
-                                onClick={() => {
-                                    onUnarchive(selectedProject);
-                                    setSelectedProject(null);
-                                }}
-                                className="flex-1 h-11 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 text-[10px] font-black uppercase tracking-widest rounded-lg transition-colors flex items-center justify-center gap-2"
-                            >
-                                <ArchiveRestore size={14} /> Pulihkan
-                            </button>
-                            <button
-                                onClick={handleDeleteClick}
-                                className="flex-1 h-11 bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 text-[10px] font-black uppercase tracking-widest rounded-lg transition-colors flex items-center justify-center gap-2"
-                            >
-                                <Trash2 size={14} /> Hapus Permanen
-                            </button>
+                            {(currentUser?.role === 'admin' || selectedProject.createdBy === currentUser?.id) && (
+                                <button
+                                    onClick={() => {
+                                        onUnarchive(selectedProject);
+                                        setSelectedProject(null);
+                                    }}
+                                    className="flex-1 h-11 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 text-[10px] font-black uppercase tracking-widest rounded-lg transition-colors flex items-center justify-center gap-2"
+                                >
+                                    <ArchiveRestore size={14} /> Pulihkan
+                                </button>
+                            )}
+                            {currentUser?.role === 'admin' && (
+                                <button
+                                    onClick={handleDeleteClick}
+                                    className="flex-1 h-11 bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 text-[10px] font-black uppercase tracking-widest rounded-lg transition-colors flex items-center justify-center gap-2"
+                                >
+                                    <Trash2 size={14} /> Hapus Permanen
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>

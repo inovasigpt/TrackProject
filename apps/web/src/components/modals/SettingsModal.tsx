@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Settings as SettingsIcon, X, Users, Layers, Flag, AlertTriangle, Plus, Trash2, Loader2 } from 'lucide-react';
+import { Settings as SettingsIcon, X, Users, Layers, Flag, AlertTriangle, Plus, Trash2, Loader2, Activity } from 'lucide-react';
 import { api } from '../../services/api';
 import ConfirmModal from './ConfirmModal';
 
@@ -28,19 +28,21 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave }
     const [phases, setPhases] = useState<SettingsItem[]>([]);
     const [statuses, setStatuses] = useState<SettingsItem[]>([]);
     const [priorities, setPriorities] = useState<SettingsItem[]>([]);
+    const [streams, setStreams] = useState<SettingsItem[]>([]);
 
     // State for new items
     const [newRole, setNewRole] = useState('');
     const [newPhase, setNewPhase] = useState<SettingsItem>({ id: '', label: '', color: 'blue' });
     const [newStatus, setNewStatus] = useState<SettingsItem>({ id: '', label: '', color: 'blue' });
     const [newPriority, setNewPriority] = useState<SettingsItem>({ id: '', label: '', color: 'amber' });
+    const [newStream, setNewStream] = useState<SettingsItem>({ id: '', label: '', color: 'cyan' });
 
     // Loading states
     const [isLoading, setIsLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
     // Delete Confirmation State
-    const [confirmDelete, setConfirmDelete] = useState<{ id: string; type: 'role' | 'phase' | 'status' | 'priority'; name: string } | null>(null);
+    const [confirmDelete, setConfirmDelete] = useState<{ id: string; type: 'role' | 'phase' | 'status' | 'priority' | 'stream'; name: string } | null>(null);
 
     // Load from API on open
     useEffect(() => {
@@ -52,11 +54,12 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave }
     const fetchSettings = async () => {
         setIsLoading(true);
         try {
-            const [phasesRes, statusesRes, prioritiesRes, rolesRes] = await Promise.all([
+            const [phasesRes, statusesRes, prioritiesRes, rolesRes, streamsRes] = await Promise.all([
                 api.getParameters('phase'),
                 api.getParameters('status'),
                 api.getParameters('priority'),
-                api.getParameters('role')
+                api.getParameters('role'),
+                api.getParameters('stream')
             ]);
 
             if (phasesRes) setPhases(phasesRes.map((p: any) => ({
@@ -88,6 +91,16 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave }
                     color: p.color || 'purple' // Default color if not present
                 })));
             }
+
+            if (streamsRes) {
+                setStreams(streamsRes.map((p: any) => ({
+                    id: p.id,
+                    label: p.label,
+                    value: p.value,
+                    color: p.color || 'cyan'
+                })));
+            }
+
 
         } catch (error) {
             console.error('Failed to load settings:', error);
@@ -143,7 +156,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave }
         }
     };
 
-    const handleDeleteClick = (id: string, type: 'role' | 'phase' | 'status' | 'priority', name: string) => {
+    const handleDeleteClick = (id: string, type: 'role' | 'phase' | 'status' | 'priority' | 'stream', name: string) => {
         setConfirmDelete({ id, type, name });
     };
 
@@ -167,6 +180,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave }
                     break;
                 case 'priority':
                     setPriorities(priorities.filter(p => p.id !== id));
+                    break;
+                case 'stream':
+                    setStreams(streams.filter(s => s.id !== id));
                     break;
             }
         } catch (error) {
@@ -270,6 +286,37 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave }
         }
     };
 
+    // ---- Stream Handlers ----
+    const handleAddStream = async () => {
+        if (!newStream.label.trim()) return;
+        setIsSaving(true);
+        try {
+            const label = newStream.label.trim();
+            const value = label;
+
+            const newRes = await api.createParameter({
+                category: 'stream',
+                label: label,
+                value: value,
+                color: newStream.color || 'cyan'
+            });
+
+            if (newRes) {
+                setStreams([...streams, {
+                    id: newRes.id,
+                    label: newRes.label,
+                    value: newRes.value,
+                    color: newRes.color
+                }]);
+                setNewStream({ id: '', label: '', color: 'cyan' });
+            }
+        } catch (error) {
+            console.error('Failed to add stream:', error);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     const handleSave = () => {
         // Since we save immediately on add/delete, this might just be "Close"
         // But if we want to trigger a refresh in parent, we can call onSave
@@ -343,6 +390,15 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave }
                                 }`}
                         >
                             <AlertTriangle size={12} /> Priority
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('streams')}
+                            className={`flex-1 py-3 text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors ${activeTab === 'streams'
+                                ? 'text-cyan-400 border-b-2 border-cyan-400 bg-cyan-500/5'
+                                : 'text-slate-500 hover:text-slate-300'
+                                }`}
+                        >
+                            <Activity size={12} /> Stream
                         </button>
                     </div>
 
@@ -568,6 +624,62 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave }
                                 </div>
                             </div>
                         )}
+                        {activeTab === 'streams' && (
+                            <div className="space-y-4">
+                                {/* Add Stream */}
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        placeholder="Nama stream..."
+                                        value={newStream.label}
+                                        onChange={(e) => setNewStream({ ...newStream, label: e.target.value })}
+                                        className="flex-1 bg-[#020617] border border-[#1e293b] rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500/50 placeholder:text-slate-700"
+                                        disabled={isSaving}
+                                    />
+                                    <div className="flex gap-1">
+                                        {AVAILABLE_COLORS.slice(0, 6).map(color => (
+                                            <button
+                                                key={color}
+                                                onClick={() => setNewStream({ ...newStream, color })}
+                                                className={`w-7 h-7 rounded-lg transition-all ${newStream.color === color ? 'ring-2 ring-white ring-offset-2 ring-offset-[#0f172a]' : ''}`}
+                                                style={{ backgroundColor: getColorHex(color) }}
+                                            />
+                                        ))}
+                                    </div>
+                                    <button
+                                        onClick={handleAddStream}
+                                        disabled={!newStream.label.trim() || isSaving}
+                                        className="px-3 py-2 bg-cyan-500/20 text-cyan-400 rounded-lg text-xs font-bold hover:bg-cyan-500/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+                                    </button>
+                                </div>
+
+                                {/* Streams List */}
+                                <div className="space-y-2">
+                                    {streams.map((stream) => (
+                                        <div
+                                            key={stream.id}
+                                            className="flex items-center justify-between p-3 bg-[#020617]/50 border border-[#1e293b] rounded-lg"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div
+                                                    className="w-4 h-4 rounded-full"
+                                                    style={{ backgroundColor: getColorHex(stream.color) }}
+                                                />
+                                                <span className="text-white text-sm">{stream.label}</span>
+                                            </div>
+                                            <button
+                                                onClick={() => handleDeleteClick(stream.id, 'stream', stream.label)}
+                                                className="p-1.5 text-rose-400 hover:bg-rose-500/20 rounded-lg transition-colors"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Footer */}
@@ -588,7 +700,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave }
                 onClose={() => setConfirmDelete(null)}
                 onConfirm={handleConfirmDelete}
                 title="Hapus Data"
-                message={`Apakah Anda yakin ingin menghapus ${confirmDelete?.type === 'role' ? 'Role' : confirmDelete?.type === 'phase' ? 'Fase' : confirmDelete?.type === 'status' ? 'Status' : 'Priority'} "${confirmDelete?.name}"? Tindakan ini tidak dapat dibatalkan.`}
+                message={`Apakah Anda yakin ingin menghapus ${confirmDelete?.type === 'role' ? 'Role' : confirmDelete?.type === 'phase' ? 'Fase' : confirmDelete?.type === 'status' ? 'Status' : confirmDelete?.type === 'stream' ? 'Stream' : 'Priority'} "${confirmDelete?.name}"? Tindakan ini tidak dapat dibatalkan.`}
                 confirmText="Hapus"
                 cancelText="Batal"
                 type="warning"

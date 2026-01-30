@@ -4,7 +4,7 @@ import {
     Database, Folder, Box, Cpu, Globe, Server, Shield, Zap, Cloud, Code,
     Info, Layers, FileText, StickyNote, LucideIcon
 } from 'lucide-react';
-import { Project } from '../../types';
+import { Project, User } from '../../types';
 import { formatDateForDisplay } from '../../utils/dateUtils';
 
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -24,6 +24,7 @@ interface ProjectDetailContentProps {
     project: Project;
     activeTab: string;
     setActiveTab: (tab: string) => void;
+    users?: User[];
 }
 
 interface ProjectDetailModalProps {
@@ -32,6 +33,8 @@ interface ProjectDetailModalProps {
     onEdit?: (project: Project) => void;
     onArchive?: (project: Project) => void;
     isArchived?: boolean;
+    currentUser?: any;
+    users?: User[];
 }
 
 const getPriorityStyle = (priority?: string) => {
@@ -66,10 +69,13 @@ const getStatusStyle = (status?: string) => {
 };
 
 // Inner content component that can be used standalone or embedded
-export const ProjectDetailContent: React.FC<ProjectDetailContentProps> = ({ project, activeTab, setActiveTab }) => {
+export const ProjectDetailContent: React.FC<ProjectDetailContentProps> = ({ project, activeTab, setActiveTab, users = [] }) => {
     const picsList = project.pics && project.pics.length > 0 ? project.pics : project.pic ? [project.pic] : [];
     const documents = project.documents || [];
     const notes = project.notes || '';
+
+    const creatorName = project.createdBy ? users.find(u => u.id === project.createdBy)?.username : '-';
+    const createdDate = project.createdAt ? formatDateForDisplay(project.createdAt) : '-';
 
     return (
         <>
@@ -110,6 +116,22 @@ export const ProjectDetailContent: React.FC<ProjectDetailContentProps> = ({ proj
                                 <span className={`text-[10px] font-black px-2 py-1 rounded border inline-block ${getStatusStyle(project.status)}`}>
                                     {project.status?.toUpperCase()}
                                 </span>
+                            </div>
+                        </div>
+                        <div className="p-3 bg-[#020617] border border-[#1e293b] rounded-lg">
+                            <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-2">Stream</label>
+                            <span className="text-[11px] font-bold text-white tracking-wide">
+                                {project.stream || '-'}
+                            </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="p-3 bg-[#020617] border border-[#1e293b] rounded-lg">
+                                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-2">Created By</label>
+                                <span className="text-[11px] font-bold text-white tracking-wide">{creatorName}</span>
+                            </div>
+                            <div className="p-3 bg-[#020617] border border-[#1e293b] rounded-lg">
+                                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-2">Created Date</label>
+                                <span className="text-[11px] font-bold text-white tracking-wide">{createdDate}</span>
                             </div>
                         </div>
                     </div>
@@ -216,7 +238,7 @@ export const ProjectDetailContent: React.FC<ProjectDetailContentProps> = ({ proj
 };
 
 // Main modal component
-const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ project, onClose, onEdit, onArchive, isArchived = false }) => {
+const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ project, onClose, onEdit, onArchive, isArchived = false, currentUser, users = [] }) => {
     const [activeTab, setActiveTab] = useState('info');
     const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
 
@@ -278,10 +300,10 @@ const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ project, onClos
                         </div>
                     </div>
 
-                    <ProjectDetailContent project={project} activeTab={activeTab} setActiveTab={setActiveTab} />
+                    <ProjectDetailContent project={project} activeTab={activeTab} setActiveTab={setActiveTab} users={users} />
 
                     {/* Footer - Edit & Archive buttons */}
-                    {!isArchived && (
+                    {!isArchived && (currentUser?.role === 'admin' || project.createdBy === currentUser?.id) && (
                         <div className="p-4 border-t border-[#1e293b] shrink-0 flex gap-3">
                             <button
                                 onClick={() => onEdit && onEdit(project)}

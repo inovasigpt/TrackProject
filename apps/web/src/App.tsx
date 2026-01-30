@@ -13,6 +13,7 @@ import {
   Lock,
   ChevronDown,
   Settings,
+  AlertTriangle,
 } from 'lucide-react';
 
 // Components
@@ -41,7 +42,7 @@ import {
 } from './pages';
 
 // Hooks
-import { useLocalStorage } from './hooks/useLocalStorage';
+import { useProjectData } from './hooks/useProjectData';
 import { useAuth } from './hooks/useAuth';
 
 import { Project, Phase } from './types';
@@ -80,8 +81,25 @@ function App() {
   const [successMessage, setSuccessMessage] = useState('');
   const profileDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Dashboard State
-  const { projects, messages, unreadCount, isLoaded, addProject, updateProject, updatePhase, deleteProject, markMessageAsRead } = useLocalStorage();
+  // App Data State (Projects & Parameters)
+  const {
+    projects,
+    messages,
+    statuses,
+    priorities,
+    phases,
+    streams,
+    unreadCount,
+    isLoaded,
+    error,
+    addProject,
+    updateProject,
+    updatePhase,
+    deleteProject,
+    markMessageAsRead,
+    refreshProjects
+  } = useProjectData();
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isAuditOpen, setIsAuditOpen] = useState(false);
   const [isAddProjectModalOpen, setIsAddProjectModalOpen] = useState(false);
@@ -93,30 +111,28 @@ function App() {
   const [selectedPhase, setSelectedPhase] = useState<{ project: Project; phase: Phase; info: any } | null>(null);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
-  const [filters, setFilters] = useState<{ pics: string[]; priorities: string[]; statuses: string[] }>({ pics: [], priorities: [], statuses: [] });
+  const [filters, setFilters] = useState<{ priorities: string[]; statuses: string[]; streams: string[] }>({ priorities: [], statuses: [], streams: [] });
   const [sortBy, setSortBy] = useState('code_asc');
+
+  // Clean error state when successfully loaded
+  const [showError, setShowError] = useState(false);
+  useEffect(() => {
+    if (error) setShowError(true);
+  }, [error]);
 
   // Separate active and archived projects
   const activeProjects = useMemo(() => projects.filter(p => !p.archived), [projects]);
   const archivedProjects = useMemo(() => projects.filter(p => p.archived), [projects]);
 
   // Check if any filters are active
-  const hasActiveFilters = filters.pics.length > 0 || filters.priorities.length > 0 || filters.statuses.length > 0;
+  const hasActiveFilters = filters.priorities.length > 0 || filters.statuses.length > 0 || filters.streams.length > 0;
 
   // Filter only active projects
   const filteredProjects = useMemo(() => {
     if (!hasActiveFilters) return activeProjects;
 
     return activeProjects.filter(project => {
-      // PIC filter
-      if (filters.pics.length > 0) {
-        const projectPics = project.pics
-          ? project.pics.map(p => p.name)
-          : project.pic ? [project.pic.name] : [];
-        if (!filters.pics.some(pic => projectPics.includes(pic))) {
-          return false;
-        }
-      }
+
 
       // Priority filter
       if (filters.priorities.length > 0) {
@@ -128,6 +144,13 @@ function App() {
       // Status filter
       if (filters.statuses.length > 0) {
         if (!filters.statuses.includes(project.status)) {
+          return false;
+        }
+      }
+
+      // Stream filter
+      if (filters.streams.length > 0) {
+        if (!filters.streams.includes(project.stream || '')) {
           return false;
         }
       }
@@ -272,6 +295,7 @@ function App() {
       setEditingProject(null);
       setSuccessMessage('Proyek berhasil diperbarui!');
       setShowSuccessModal(true);
+      refreshProjects(); // Refresh to get latest data (including correct user links)
     }
   };
 
@@ -303,7 +327,7 @@ function App() {
     exportToPDF(activeProjects);
   };
 
-  const handleApplyFilters = (newFilters: { pics: string[]; priorities: string[]; statuses: string[] }) => {
+  const handleApplyFilters = (newFilters: { priorities: string[]; statuses: string[]; streams: string[] }) => {
     setFilters(newFilters);
   };
 
@@ -346,11 +370,18 @@ function App() {
   if (!authLoaded || !isLoaded) {
     return (
       <div className="flex h-screen bg-[#020617] items-center justify-center">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-[#26b9f7] rounded flex items-center justify-center text-[#020617] animate-pulse">
-            <Rocket size={18} strokeWidth={3} />
+        <div className="flex flex-col items-center gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-[#26b9f7] rounded flex items-center justify-center text-[#020617] animate-pulse">
+              <Rocket size={18} strokeWidth={3} />
+            </div>
+            <span className="text-white text-sm font-bold uppercase tracking-widest">Loading...</span>
           </div>
-          <span className="text-white text-sm font-bold uppercase tracking-widest">Loading...</span>
+          {/* Visual feedback for slow connections/cold starts */}
+          <div className="w-48 h-1 bg-[#1e293b] rounded-full overflow-hidden">
+            <div className="h-full bg-[#26b9f7] animate-progressorigin w-full origin-left" style={{ animationDuration: '1.5s', animationIterationCount: 'infinite' }}></div>
+          </div>
+          <p className="text-[#26b9f7] text-[10px] font-mono animate-pulse">Waking up database...</p>
         </div>
       </div>
     );
@@ -410,6 +441,15 @@ function App() {
   // Main Dashboard (Logged In)
   return (
     <div className="flex h-screen bg-[#020617] text-slate-300 font-display overflow-hidden select-none">
+
+      {/* Error Banner */}
+      {showError && (
+        <div className="fixed top-0 inset-x-0 z-[100] bg-red-500/90 text-white p-2 flex items-center justify-center gap-2 text-xs font-bold animate-in slide-in-from-top">
+          <AlertTriangle size={14} />
+          <span>{error}</span>
+          <button onClick={() => setShowError(false)} className="ml-2 underline opacity-80 hover:opacity-100">Dismiss</button>
+        </div>
+      )}
 
       {/* Top Header */}
       <header className="fixed top-0 left-0 right-0 h-16 border-b border-[#1e293b] bg-[#020617] flex items-center justify-between px-4 z-50">
@@ -617,6 +657,9 @@ function App() {
         <Sidebar
           scrollRef={sidebarScrollRef}
           projects={sortedProjects}
+          statuses={statuses}
+          priorities={priorities}
+          streams={streams}
           isOpen={isSidebarOpen}
           onProjectClick={setSelectedProject}
           onAddProject={() => setIsAddProjectModalOpen(true)}
@@ -646,6 +689,9 @@ function App() {
           isOpen={isOverviewOpen}
           onClose={() => setIsOverviewOpen(false)}
           projects={activeProjects}
+          phases={phases}
+          statuses={statuses}
+          priorities={priorities}
         />
 
         {/* Inbox Slide-over */}
@@ -669,14 +715,18 @@ function App() {
         onClose={() => setSelectedPhase(null)}
         onSave={handleSavePhase}
       />
-
+      {/* Project Detail Modal */}
       <ProjectDetailModal
         project={selectedProject}
         onClose={() => setSelectedProject(null)}
-        onEdit={handleEditProject}
-        onArchive={handleArchiveProject}
+        onEdit={(project) => {
+          setSelectedProject(null);
+          setEditingProject(project);
+        }}
+        onArchive={(project) => updateProject(project.id, { archived: true })}
+        currentUser={currentUser}
+        users={users}
       />
-
       <EditProjectModal
         project={editingProject}
         isOpen={!!editingProject}
@@ -690,6 +740,8 @@ function App() {
         archivedProjects={archivedProjects}
         onUnarchive={handleUnarchiveProject}
         onDeletePermanently={handleDeletePermanently}
+        currentUser={currentUser}
+        users={users}
       />
 
       <SettingsModal
@@ -704,6 +756,9 @@ function App() {
         projects={activeProjects}
         currentFilters={filters}
         onApply={handleApplyFilters}
+        statuses={statuses}
+        priorities={priorities}
+        streams={streams}
       />
 
       <ChangePasswordModal
