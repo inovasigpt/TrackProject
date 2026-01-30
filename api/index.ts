@@ -1,8 +1,17 @@
+import { Hono } from 'hono';
 import { handle } from 'hono/vercel';
-import app from '../apps/api/src/index.js';
 
 export const config = {
     runtime: 'nodejs',
 };
+
+const app = new Hono().basePath('/api');
+
+app.get('/', (c) => {
+    return c.json({
+        message: 'Hello from Inline Vercel Function!',
+        time: new Date().toISOString()
+    });
+});
 
 export default handle(app);
