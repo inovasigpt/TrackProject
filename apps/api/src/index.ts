@@ -5,11 +5,11 @@ import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 
 
-import authRoutes from './routes/auth.js';
-import projectRoutes from './routes/projects.js';
-import userRoutes from './routes/users.js';
-import messageRoutes from './routes/messages.js';
-import parametersRouter from './routes/parameters.js';
+// import authRoutes from './routes/auth.js';
+// import projectRoutes from './routes/projects.js';
+// import userRoutes from './routes/users.js';
+// import messageRoutes from './routes/messages.js';
+// import parametersRouter from './routes/parameters.js';
 
 const app = new Hono().basePath('/api');
 
@@ -40,16 +40,17 @@ app.get('/', (c) => {
             hasDatabaseUrl: !!dbUrl,
             dbUrlPrefix: dbUrl ? dbUrl.substring(0, 15) + '...' : 'MISSING',
             region: process.env.VERCEL_REGION || 'unknown',
+            IS_ISOLATED: true,
         }
     });
 });
 
 // Routes
-app.route('/auth', authRoutes);
-app.route('/projects', projectRoutes);
-app.route('/users', userRoutes);
-app.route('/messages', messageRoutes);
-app.route('/parameters', parametersRouter);
+// app.route('/auth', authRoutes);
+// app.route('/projects', projectRoutes);
+// app.route('/users', userRoutes);
+// app.route('/messages', messageRoutes);
+// app.route('/parameters', parametersRouter);
 
 // Error handler
 app.onError((err, c) => {
