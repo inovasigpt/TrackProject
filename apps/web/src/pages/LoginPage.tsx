@@ -37,7 +37,7 @@ const LoginPage = ({ onLogin, onForgotPassword, onRegister }) => {
         // Simulate network delay
         await new Promise(resolve => setTimeout(resolve, 500));
 
-        const result = onLogin(formData.email, formData.password);
+        const result = await onLogin(formData.email, formData.password);
         if (!result.success) {
             setError(result.error);
         }

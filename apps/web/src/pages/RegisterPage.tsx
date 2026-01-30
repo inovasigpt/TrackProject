@@ -73,7 +73,7 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onRegister, onBack, roles =
         // Simulate network delay
         await new Promise(resolve => setTimeout(resolve, 800));
 
-        const result = onRegister({
+        const result = await onRegister({
             username: formData.username,
             email: formData.email,
             password: formData.password,
