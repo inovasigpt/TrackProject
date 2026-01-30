@@ -1,16 +1,14 @@
-import { Hono } from 'hono';
-import { handle } from 'hono/vercel';
+import { getRequestListener } from '@hono/node-server';
+import app from '../apps/api/src/index.js';
 
-const app = new Hono().basePath('/api');
+export const config = {
+    runtime: 'nodejs',
+};
 
-// Catch all requests
-app.all('*', (c) => {
-    return c.json({
-        success: true,
-        message: 'Hono Inline Adapter is working!',
-        path: c.req.path,
-        method: c.req.method,
-    });
-});
+// Create a request listener from the Hono app
+const requestListener = getRequestListener(app.fetch);
 
-export default handle(app);
+// Export a vanilla Node.js handler for Vercel
+export default function handler(request: any, response: any) {
+    return requestListener(request, response);
+}
