@@ -1,12 +1,16 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { Hono } from 'hono';
+import { handle } from 'hono/vercel';
 
-export default function handler(
-    request: VercelRequest,
-    response: VercelResponse,
-) {
-    response.status(200).json({
-        message: 'Vanilla Vercel Function IS WORKING!',
-        timestamp: new Date().toISOString(),
-        query: request.query,
+const app = new Hono().basePath('/api');
+
+// Catch all requests
+app.all('*', (c) => {
+    return c.json({
+        success: true,
+        message: 'Hono Inline Adapter is working!',
+        path: c.req.path,
+        method: c.req.method,
     });
-}
+});
+
+export default handle(app);
