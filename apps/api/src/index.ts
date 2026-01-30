@@ -78,6 +78,31 @@ app.post('/echo', async (c) => {
     }
 });
 
+import { users } from './db/schema.js';
+import { hashPassword } from './lib/auth.js';
+
+app.get('/debug/db', async (c) => {
+    try {
+        const start = Date.now();
+        const result = await db.select().from(users).limit(1);
+        const duration = Date.now() - start;
+        return c.json({ status: 'ok', type: 'db_select_users', duration, count: result.length });
+    } catch (e: any) {
+        return c.json({ status: 'error', type: 'db_select_users', error: e.message }, 500);
+    }
+});
+
+app.get('/debug/cpu', async (c) => {
+    try {
+        const start = Date.now();
+        const hash = await hashPassword('test-password');
+        const duration = Date.now() - start;
+        return c.json({ status: 'ok', type: 'bcrypt_hash', duration, hash });
+    } catch (e: any) {
+        return c.json({ status: 'error', type: 'bcrypt_hash', error: e.message }, 500);
+    }
+});
+
 // Routes
 app.route('/auth', authRoutes);
 app.route('/projects', projectRoutes);
