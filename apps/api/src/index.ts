@@ -30,9 +30,25 @@ app.use('*', cors({
     credentials: true,
 }));
 
+import { sql } from 'drizzle-orm';
+import { db } from './db/index.js';
+
 // Debug / Health Check
-app.get('/', (c) => {
+app.get('/', async (c) => {
     const dbUrl = process.env.DATABASE_URL;
+    let dbStatus = 'unknown';
+    let dbError = null;
+
+    try {
+        // Try simple query
+        await db.execute(sql`SELECT 1`);
+        dbStatus = 'connected';
+    } catch (e: any) {
+        dbStatus = 'error';
+        dbError = e.message;
+        console.error('Health Check DB Error:', e);
+    }
+
     return c.json({
         status: 'ok',
         timestamp: new Date().toISOString(),
@@ -40,7 +56,10 @@ app.get('/', (c) => {
             hasDatabaseUrl: !!dbUrl,
             dbUrlPrefix: dbUrl ? dbUrl.substring(0, 15) + '...' : 'MISSING',
             region: process.env.VERCEL_REGION || 'unknown',
-            // IS_ISOLATED: true, // Commented out
+        },
+        db: {
+            status: dbStatus,
+            error: dbError
         }
     });
 });
