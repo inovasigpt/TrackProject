@@ -5,6 +5,44 @@ import { hashPassword, verifyPassword, signToken } from '../lib/auth.js';
 
 const auth = new Hono();
 
+// Debug Login via GET (to bypass POST body parsing issues)
+auth.get('/debug-login', async (c) => {
+    try {
+        const email = c.req.query('email');
+        const password = c.req.query('password');
+
+        if (!email || !password) {
+            return c.json({ error: 'Missing email/password params' }, 400);
+        }
+
+        console.log('[DebugLogin] Starting', { email });
+
+        // 1. DB Query
+        const startDb = Date.now();
+        const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
+        const dbDuration = Date.now() - startDb;
+        console.log('[DebugLogin] DB finished', { duration: dbDuration, found: result.length > 0 });
+
+        const user = result[0];
+        if (!user) return c.json({ error: 'User not found', dbDuration });
+
+        // 2. Hash Verify
+        const startHash = Date.now();
+        const isValid = await verifyPassword(password, user.password);
+        const hashDuration = Date.now() - startHash;
+
+        return c.json({
+            success: isValid,
+            dbDuration,
+            hashDuration,
+            user: { ...user, password: '***' }
+        });
+
+    } catch (e: any) {
+        return c.json({ error: e.message, stack: e.stack }, 500);
+    }
+});
+
 // Register
 auth.post('/register', async (c) => {
     try {
