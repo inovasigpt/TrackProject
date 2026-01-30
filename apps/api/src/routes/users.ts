@@ -94,7 +94,7 @@ userRoutes.put('/admin/:id/status', async (c) => {
         const { status } = await c.req.json();
 
         const [updated] = await db.update(users)
-            .set({ status })
+            .set({ status } as any)
             .where(eq(users.id, id))
             .returning();
 

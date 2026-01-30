@@ -62,7 +62,7 @@ projectRoutes.post('/', async (c) => {
             icon,
             notes,
             documents: body.documents || [],
-        }).returning();
+        } as any).returning();
 
 
 
@@ -132,7 +132,7 @@ projectRoutes.put('/:id', async (c) => {
                 icon,
                 notes,
                 documents,
-            })
+            } as any)
             .where(eq(projects.id, id))
             .returning();
 

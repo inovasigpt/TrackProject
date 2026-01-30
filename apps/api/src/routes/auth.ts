@@ -31,7 +31,7 @@ auth.post('/register', async (c) => {
             role: role || 'user',
             status: 'pending',
             avatar: `https://i.pravatar.cc/100?u=${username}`,
-        }).returning();
+        } as any).returning();
 
         return c.json({
             success: true,
