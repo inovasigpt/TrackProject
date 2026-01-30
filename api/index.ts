@@ -3,6 +3,9 @@ import app from '../apps/api/src/index.js';
 
 export const config = {
     runtime: 'nodejs',
+    api: {
+        bodyParser: false,
+    },
 };
 
 // Create a request listener from the Hono app
