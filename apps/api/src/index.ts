@@ -14,7 +14,7 @@ import parametersRouter from './routes/parameters.js';
 const app = new Hono().basePath('/api');
 
 // Middleware
-app.use('*', logger());
+app.use(logger());
 app.use('*', cors({
     origin: [
         'http://localhost:5173',
@@ -30,8 +30,19 @@ app.use('*', cors({
     credentials: true,
 }));
 
-// Health check
-app.get('/', (c) => c.json({ status: 'ok', message: 'PMO API is running' }));
+// Debug / Health Check
+app.get('/', (c) => {
+    const dbUrl = process.env.DATABASE_URL;
+    return c.json({
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        env: {
+            hasDatabaseUrl: !!dbUrl,
+            dbUrlPrefix: dbUrl ? dbUrl.substring(0, 15) + '...' : 'MISSING',
+            region: process.env.VERCEL_REGION || 'unknown',
+        }
+    });
+});
 
 // Routes
 app.route('/auth', authRoutes);
