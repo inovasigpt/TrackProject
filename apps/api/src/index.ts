@@ -64,6 +64,20 @@ app.get('/', async (c) => {
     });
 });
 
+app.post('/echo', async (c) => {
+    try {
+        const body = await c.req.json();
+        return c.json({
+            status: 'ok',
+            message: 'POST request received',
+            body: body,
+            timestamp: new Date().toISOString()
+        });
+    } catch (e: any) {
+        return c.json({ status: 'error', message: 'Failed to parse body', error: e.message }, 400);
+    }
+});
+
 // Routes
 app.route('/auth', authRoutes);
 app.route('/projects', projectRoutes);
