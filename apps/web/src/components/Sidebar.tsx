@@ -115,6 +115,7 @@ const Sidebar = ({
         { id: 'priority_high', label: 'Priority High-Low' },
         { id: 'priority_low', label: 'Priority Low-High' },
         { id: 'status', label: 'Status' },
+        { id: 'stream', label: 'Stream' },
     ];
 
     // Close sort dropdown when clicking outside

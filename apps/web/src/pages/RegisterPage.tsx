@@ -16,7 +16,7 @@ import type { Role } from '../types';
 import api from '../services/api';
 
 interface RegisterPageProps {
-    onRegister: (userData: { username: string; email: string; password: string; role: string }) => any;
+    onRegister: (userData: { username: string; email: string; password: string; role: string }) => Promise<any> | any;
     onBack: () => void;
     roles?: Role[];
 }

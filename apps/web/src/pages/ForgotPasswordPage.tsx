@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 
 interface ForgotPasswordPageProps {
-    onSubmit: (email: string) => { success: boolean; error?: string };
+    onSubmit: (email: string) => Promise<{ success: boolean; error?: string }> | { success: boolean; error?: string };
     onBack: () => void;
 }
 
@@ -36,7 +36,7 @@ const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ onSubmit, onBac
         // Simulate network delay
         await new Promise(resolve => setTimeout(resolve, 800));
 
-        const result = onSubmit(email);
+        const result = await onSubmit(email);
         if (!result.success) {
             setError(result.error || 'Terjadi kesalahan');
             setIsLoading(false);

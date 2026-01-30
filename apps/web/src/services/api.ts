@@ -79,6 +79,20 @@ class ApiClient {
         });
     }
 
+    async forgotPassword(email: string) {
+        return this.request<{ success: boolean; message: string }>('/auth/forgot-password', {
+            method: 'POST',
+            body: { email },
+        });
+    }
+
+    async resetPassword(token: string, newPassword: string) {
+        return this.request<{ success: boolean; message: string }>('/auth/reset-password', {
+            method: 'POST',
+            body: { token, newPassword },
+        });
+    }
+
     logout() {
         this.setToken(null);
     }

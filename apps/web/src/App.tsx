@@ -69,7 +69,8 @@ function App() {
     requestPasswordReset,
     resetPassword,
     changePassword,
-    refreshUsers
+    refreshUsers,
+    setResetToken
   } = useAuth();
 
   // Auth View State
@@ -80,6 +81,27 @@ function App() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const profileDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Check URL for reset token
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const token = searchParams.get('token');
+    const path = window.location.pathname;
+
+    if (path === '/reset-password' && token) {
+      // Decode token to get email (for display only)
+      try {
+        const decoded = atob(token);
+        const email = decoded.split(':')[0];
+        setResetToken({ email, token });
+        setAuthView('reset');
+        // Clean URL
+        window.history.replaceState({}, document.title, '/');
+      } catch (e) {
+        console.error('Invalid token format');
+      }
+    }
+  }, []);
 
   // App Data State (Projects & Parameters)
   const {
@@ -180,6 +202,15 @@ function App() {
         );
       case 'status':
         return sorted.sort((a, b) => (a.status || '').localeCompare(b.status || ''));
+      case 'stream':
+        return sorted.sort((a, b) => {
+          const streamA = a.stream || '';
+          const streamB = b.stream || '';
+          if (!streamA && !streamB) return 0;
+          if (!streamA) return 1;
+          if (!streamB) return -1;
+          return streamA.localeCompare(streamB);
+        });
       default:
         return sorted;
     }
@@ -344,18 +375,20 @@ function App() {
     return register(userData);
   };
 
-  const handleForgotPassword = (email: string) => {
-    const result = requestPasswordReset(email);
+  const handleForgotPassword = async (email: string) => {
+    const result = await requestPasswordReset(email);
     if (result.success) {
       setAuthView('reset');
     }
     return result;
   };
 
-  const handleResetPassword = (newPassword: string) => {
-    const result = resetPassword(newPassword);
+  const handleResetPassword = async (newPassword: string) => {
+    const result = await resetPassword(resetToken?.token, newPassword);
     if (result.success) {
       setAuthView('login');
+      setSuccessMessage('Password berhasil diubah, silakan login.');
+      setShowSuccessModal(true);
     }
     return result;
   };

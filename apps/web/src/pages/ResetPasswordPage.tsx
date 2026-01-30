@@ -48,7 +48,7 @@ const ResetPasswordPage = ({ email, onSubmit, onBack }) => {
         // Simulate network delay
         await new Promise(resolve => setTimeout(resolve, 800));
 
-        const result = onSubmit(formData.password);
+        const result = await onSubmit(formData.password);
         if (result.success) {
             setSuccess(true);
         } else {

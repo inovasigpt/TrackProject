@@ -134,12 +134,6 @@ export const useAuth = () => {
         }
     }, []);
 
-    // TODO: Connect password reset to API
-    const requestPasswordReset = useCallback((_email: string) => {
-        // Placeholder
-        return { success: true, message: 'Fitur reset password belum terhubung ke API' };
-    }, []);
-
     // TODO: Implement Role management API
     const toggleRoleActive = useCallback((roleId: string) => {
         // Temporary optimistic update until API endpoint exists
@@ -157,14 +151,32 @@ export const useAuth = () => {
         setRoles(prev => prev.filter(r => r.id !== roleId));
     }, []);
 
+    const requestPasswordReset = useCallback(async (email: string) => {
+        try {
+            const response = await api.forgotPassword(email);
+            if (response.success) {
+                return { success: true, message: response.message };
+            }
+            return { success: false, error: 'Gagal mengirim permintaan reset password' };
+        } catch (error: any) {
+            return { success: false, error: error.message || 'Terjadi kesalahan' };
+        }
+    }, []);
 
-    const resetPassword = useCallback((_newPassword: string) => {
-        // Placeholder
-        return { success: false, error: 'Fitur belum tersedia' };
+    const resetPassword = useCallback(async (token: string, newPassword: string) => {
+        try {
+            const response = await api.resetPassword(token, newPassword);
+            if (response.success) {
+                return { success: true, message: response.message };
+            }
+            return { success: false, error: 'Gagal mereset password' };
+        } catch (error: any) {
+            return { success: false, error: error.message || 'Terjadi kesalahan' };
+        }
     }, []);
 
     const changePassword = useCallback((_currentPassword: string, _newPassword: string) => {
-        // Placeholder
+        // Placeholder - requires separate API endpoint
         return { success: false, error: 'Fitur belum tersedia' };
     }, []);
 
@@ -195,6 +207,7 @@ export const useAuth = () => {
         requestPasswordReset,
         resetPassword,
         changePassword,
-        refreshUsers: fetchUsers
+        refreshUsers: fetchUsers,
+        setResetToken // Expose setter
     };
 };
