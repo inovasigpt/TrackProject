@@ -65,7 +65,7 @@ userRoutes.post('/admin/create', async (c) => {
             role: role || 'user',
             status: 'approved', // Auto approve
             avatar: `https://i.pravatar.cc/100?u=${username}`,
-        }).returning();
+        } as any).returning();
 
         return c.json({
             success: true,
