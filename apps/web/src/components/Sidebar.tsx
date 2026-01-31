@@ -332,14 +332,16 @@ const Sidebar = ({
                                                 {(project.priority || 'Medium').toUpperCase()}
                                             </span>
                                             {/* Stream Badge */}
-                                            {project.stream && (
+                                            {/* Stream Badge */}
+                                            {project.stream && (Array.isArray(project.stream) ? project.stream : [project.stream]).map((s, idx) => (
                                                 <span
+                                                    key={`${project.id}-stream-${idx}`}
                                                     className="text-[8px] font-black px-1.5 py-0.5 rounded border"
-                                                    style={getStreamStyle(project.stream)}
+                                                    style={getStreamStyle(String(s))}
                                                 >
-                                                    {project.stream.toUpperCase()}
+                                                    {String(s).toUpperCase()}
                                                 </span>
-                                            )}
+                                            ))}
                                             {/* Status Badge */}
                                             <span
                                                 className="text-[8px] font-black px-1.5 py-0.5 rounded border"

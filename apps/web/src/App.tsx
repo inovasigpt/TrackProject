@@ -172,7 +172,8 @@ function App() {
 
       // Stream filter
       if (filters.streams.length > 0) {
-        if (!filters.streams.includes(project.stream || '')) {
+        const projectStreams = Array.isArray(project.stream) ? project.stream : (project.stream ? [String(project.stream)] : []);
+        if (!projectStreams.some(s => filters.streams.includes(s))) {
           return false;
         }
       }
@@ -185,7 +186,7 @@ function App() {
   const sortedProjects = useMemo(() => {
     const sorted = [...filteredProjects];
 
-    const priorityOrder = { 'High': 1, 'Medium': 2, 'Low': 3 };
+    const priorityOrder: Record<string, number> = { 'High': 1, 'Medium': 2, 'Low': 3 };
 
     switch (sortBy) {
       case 'code_asc':
@@ -204,8 +205,8 @@ function App() {
         return sorted.sort((a, b) => (a.status || '').localeCompare(b.status || ''));
       case 'stream':
         return sorted.sort((a, b) => {
-          const streamA = a.stream || '';
-          const streamB = b.stream || '';
+          const streamA = Array.isArray(a.stream) ? a.stream.join(', ') : (a.stream || '');
+          const streamB = Array.isArray(b.stream) ? b.stream.join(', ') : (b.stream || '');
           if (!streamA && !streamB) return 0;
           if (!streamA) return 1;
           if (!streamB) return -1;
@@ -331,11 +332,11 @@ function App() {
   };
 
   const handleArchiveProject = (project: any) => {
-    updateProject(project.id, { ...project, archived: true });
+    updateProject(project.id, { archived: true });
   };
 
   const handleUnarchiveProject = (project: any) => {
-    updateProject(project.id, { ...project, archived: false });
+    updateProject(project.id, { archived: false });
   };
 
   const handleDeletePermanently = (projectId: string) => {

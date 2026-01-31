@@ -185,42 +185,50 @@ projectRoutes.put('/:id', async (c) => {
             .where(eq(projects.id, id))
             .returning();
 
-        // 2. Sync PICs (Delete all and re-create)
-        await db.delete(projectPics).where(eq(projectPics.projectId, id));
+        // 2. Sync PICs (Delete all and re-create) ONLY if picsList is provided
+        if (picsList !== undefined) {
+            await db.delete(projectPics).where(eq(projectPics.projectId, id));
 
-        if (picsList && picsList.length > 0) {
-            await db.insert(projectPics).values(
-                picsList.map((pic: any) => {
-                    const isValidUuid = pic.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(pic.id);
-                    return {
+            if (picsList && picsList.length > 0) {
+                await db.insert(projectPics).values(
+                    picsList.map((pic: any) => {
+                        const targetUserId = pic.userId || pic.id;
+                        const isValidUuid = targetUserId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetUserId);
+                        return {
+                            projectId: id,
+                            userId: isValidUuid ? targetUserId : null,
+                            name: pic.name,
+                            avatar: pic.avatar,
+                        };
+                    })
+                );
+            }
+        }
+
+        // 3. Sync Phases (Delete all and re-create) ONLY if phasesList is provided
+        if (phasesList !== undefined) {
+            await db.delete(phases).where(eq(phases.projectId, id));
+
+            let createdPhases: any[] = [];
+            if (phasesList && phasesList.length > 0) {
+                createdPhases = await db.insert(phases).values(
+                    phasesList.map((phase: any, index: number) => ({
                         projectId: id,
-                        userId: isValidUuid ? pic.id : null,
-                        name: pic.name,
-                        avatar: pic.avatar,
-                    };
-                })
-            );
+                        name: phase.name || phase.label || 'Phase',
+                        startDate: phase.startDate ? new Date(phase.startDate) : null,
+                        endDate: phase.endDate ? new Date(phase.endDate) : null,
+                        status: phase.status || 'pending',
+                        progress: String(phase.progress || 0),
+                        order: String(index),
+                    }))
+                ).returning();
+            }
         }
 
-        // 3. Sync Phases (Delete all and re-create)
-        await db.delete(phases).where(eq(phases.projectId, id));
+        // Fetch current relations (Phases and PICs) to return complete project object
+        // This ensures partial updates (e.g. just archiving) don't return empty lists for relations
+        const currentPhases = await db.select().from(phases).where(eq(phases.projectId, id));
 
-        let createdPhases: any[] = [];
-        if (phasesList && phasesList.length > 0) {
-            createdPhases = await db.insert(phases).values(
-                phasesList.map((phase: any, index: number) => ({
-                    projectId: id,
-                    name: phase.name || phase.label || 'Phase',
-                    startDate: phase.startDate ? new Date(phase.startDate) : null,
-                    endDate: phase.endDate ? new Date(phase.endDate) : null,
-                    status: phase.status || 'pending',
-                    progress: String(phase.progress || 0),
-                    order: String(index),
-                }))
-            ).returning();
-        }
-
-        // Fetch re-created PICs
         const currentPics = await db.select({
             id: projectPics.id,
             projectId: projectPics.projectId,
@@ -233,21 +241,38 @@ projectRoutes.put('/:id', async (c) => {
             .leftJoin(users, or(eq(projectPics.userId, users.id), eq(projectPics.name, users.username)))
             .where(eq(projectPics.projectId, id));
 
-
         // Audit Log
         // Audit Log
         let action = 'UPDATE';
-        let detail = `Project "${updated.name}" updated (Status: ${updated.status}, Priority: ${updated.priority}, Stream: ${stream || '-'})`;
+        let changes: string[] = [];
 
-        if (archived !== undefined && existingProject && archived !== existingProject.archived) {
+        if (name && name !== existingProject.name) changes.push(`Name: "${existingProject.name}" -> "${name}"`);
+        if (status && status !== existingProject.status) changes.push(`Status: "${existingProject.status}" -> "${status}"`);
+        if (priority && priority !== existingProject.priority) changes.push(`Priority: "${existingProject.priority}" -> "${priority}"`);
+
+        // Handle Stream comparison (array vs array or null)
+        const oldStream = Array.isArray(existingProject.stream) ? existingProject.stream.sort().join(',') : (existingProject.stream || '');
+        const newStream = Array.isArray(stream) ? stream.sort().join(',') : (stream || '');
+        if (stream !== undefined && oldStream !== newStream) {
+            changes.push(`Stream: "[${oldStream}]" -> "[${newStream}]"`);
+        }
+
+        if (archived !== undefined && archived !== existingProject.archived) {
             if (archived) {
                 action = 'ARCHIVE';
-                detail = `Project "${updated.name}" archived`;
+                changes.push('Project archived');
             } else {
-                action = 'UNARCHIVE'; // Or just UPDATE with detail
-                detail = `Project "${updated.name}" unarchived`;
+                action = 'UNARCHIVE';
+                changes.push('Project unarchived');
             }
         }
+
+        if (picsList && picsList.length > 0) changes.push('PICs updated');
+        if (phasesList && phasesList.length > 0) changes.push('Phases updated');
+
+        let detail = changes.length > 0
+            ? `Project updated. Changes: ${changes.join(', ')}`
+            : `Project "${updated.name}" updated (No major changes detected)`;
 
         await auditService.log(
             user?.userId,
@@ -261,13 +286,20 @@ projectRoutes.put('/:id', async (c) => {
             success: true,
             data: {
                 ...updated,
-                phases: createdPhases,
+                phases: currentPhases,
                 pics: currentPics
             }
         });
     } catch (error) {
         console.error('Update project error:', error);
-        return c.json({ success: false, error: 'Failed to update project' }, 500);
+        // Log detailed error for debugging
+        if (error instanceof Error) {
+            console.error('Error stack:', error.stack);
+        }
+        return c.json({
+            success: false,
+            error: `Failed to update project: ${error instanceof Error ? error.message : 'Unknown error'}`
+        }, 500);
     }
 });
 

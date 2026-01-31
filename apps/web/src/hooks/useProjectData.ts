@@ -65,10 +65,14 @@ export const useProjectData = () => {
                 setProjects(prev => [...prev, response.data]);
                 return { success: true, data: response.data };
             }
-            return { success: false, error: 'Gagal membuat proyek' };
-        } catch (err) {
+            const msg = 'Gagal membuat proyek';
+            setError(msg);
+            return { success: false, error: msg };
+        } catch (err: any) {
             console.error('Add project error:', err);
-            return { success: false, error: 'Terjadi kesalahan saat membuat proyek' };
+            const msg = err.message || 'Terjadi kesalahan saat membuat proyek';
+            setError(msg);
+            return { success: false, error: msg };
         }
     }, []);
 
@@ -81,8 +85,14 @@ export const useProjectData = () => {
                 );
                 return { success: true };
             }
-        } catch (err) {
+            const msg = 'Gagal memperbarui proyek';
+            setError(msg);
+            return { success: false, error: msg };
+        } catch (err: any) {
             console.error('Update project error:', err);
+            const msg = err.message || 'Terjadi kesalahan saat memperbarui proyek';
+            setError(msg);
+            return { success: false, error: msg };
         }
         return { success: false };
     }, []);

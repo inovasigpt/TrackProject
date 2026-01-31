@@ -38,11 +38,11 @@ interface ProjectDetailModalProps {
 }
 
 const getPriorityStyle = (priority?: string) => {
-    switch (priority?.toLowerCase()) {
-        case 'high': return 'border-amber-500/50 text-amber-400 bg-amber-500/10';
-        case 'low': return 'border-emerald-500/50 text-emerald-400 bg-emerald-500/10';
-        default: return 'border-blue-500/50 text-blue-400 bg-blue-500/10';
-    }
+    const p = priority?.toLowerCase() || '';
+    if (p.includes('high') || p.includes('tinggi') || p.includes('urgent')) return 'border-amber-500/50 text-amber-400 bg-amber-500/10';
+    if (p.includes('medium') || p.includes('sedang') || p.includes('normal')) return 'border-blue-500/50 text-blue-400 bg-blue-500/10';
+    if (p.includes('low') || p.includes('rendah')) return 'border-emerald-500/50 text-emerald-400 bg-emerald-500/10';
+    return 'border-slate-500/50 text-slate-400 bg-slate-500/10';
 };
 
 const getStatusStyle = (status?: string) => {

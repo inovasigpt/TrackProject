@@ -78,16 +78,21 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({ project, isOpen, on
 
                     const projectPics = (project.pics && project.pics.length > 0)
                         ? project.pics.map(p => {
+                            // API returns userId. We must use that as the 'id' for the Person linkage.
+                            // Do NOT use p.id (which is project_pics primary key) because backend expects user.id for linkage.
+                            const pAny = p as any;
+
                             // Robustness: If API didn't return role (e.g. unlinked legacy data), try to find user by name
                             const foundUser = usersData.success ? usersData.data.find((u: any) => u.username === p.name) : null;
+
                             return {
-                                id: p.id || foundUser?.id, // Preserve ID
+                                id: pAny.userId || foundUser?.id, // CORRECTED: Use userId or found user's ID.
                                 name: p.name,
                                 role: p.role || foundUser?.role || 'Developer',
                                 avatar: p.avatar || foundUser?.avatar
                             };
                         })
-                        : project.pic ? [{ id: project.pic.id, name: project.pic.name, role: project.pic.role || 'Developer', avatar: project.pic.avatar }] : [{ name: '', role: 'Developer' }];
+                        : project.pic ? [{ id: (project.pic as any).userId || project.pic.id, name: project.pic.name, role: project.pic.role || 'Developer', avatar: project.pic.avatar }] : [{ name: '', role: 'Developer' }];
                     setPics(projectPics);
 
                     setPhases(project.phases?.map(p => {
@@ -219,7 +224,6 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({ project, isOpen, on
                 notes: notes,
             });
         }
-        onClose();
     };
 
 
