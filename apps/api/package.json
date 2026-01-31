@@ -19,7 +19,8 @@
         "drizzle-orm": "^0.36.0",
         "hono": "^4.6.0",
         "jsonwebtoken": "^9.0.2",
-        "resend": "^6.9.1"
+        "resend": "^6.9.1",
+        "xlsx": "^0.18.5"
     },
     "devDependencies": {
         "@types/bcryptjs": "^2.4.6",

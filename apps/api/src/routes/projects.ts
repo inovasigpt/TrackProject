@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
-import { eq, or } from 'drizzle-orm';
-import { db, projects, phases, projectPics, users } from '../db/index.js';
+import { eq, or, sql } from 'drizzle-orm';
+import { db, projects, phases, projectPics, users, parameters } from '../db/index.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { auditService } from '../services/auditService.js';
 
@@ -39,8 +39,20 @@ projectRoutes.get('/', async (c) => {
         // Get phases and pics for each project
         const projectsWithData = await Promise.all(
             allProjects.map(async (project) => {
-                const projectPhases = await db.select().from(phases)
+                const projectPhases = await db.select({
+                    id: phases.id,
+                    projectId: phases.projectId,
+                    name: sql<string>`COALESCE(${parameters.label}, ${phases.name})`, // Use label if available, else name
+                    startDate: phases.startDate,
+                    endDate: phases.endDate,
+                    status: phases.status,
+                    progress: phases.progress,
+                    order: phases.order,
+                })
+                    .from(phases)
+                    .leftJoin(parameters, sql`${phases.name} = CAST(${parameters.id} AS TEXT)`)
                     .where(eq(phases.projectId, project.id));
+
                 const pics = await db.select({
                     id: projectPics.id,
                     projectId: projectPics.projectId,

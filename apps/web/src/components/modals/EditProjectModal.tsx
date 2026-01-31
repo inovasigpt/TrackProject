@@ -31,7 +31,7 @@ const TABS = [
 
 const EditProjectModal: React.FC<EditProjectModalProps> = ({ project, isOpen, onClose, onSubmit }) => {
     const [activeTab, setActiveTab] = useState('info');
-    const [formData, setFormData] = useState({ code: '', description: '', priority: 'Medium', status: 'On Track', stream: [] as string[], icon: 'database' });
+    const [formData, setFormData] = useState({ code: '', name: '', description: '', priority: 'Medium', status: 'On Track', stream: [] as string[], icon: 'database' });
     const [pics, setPics] = useState<Pic[]>([]);
     const [phases, setPhases] = useState<any[]>([]);
     const [documents, setDocuments] = useState<Document[]>([]);
@@ -69,6 +69,7 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({ project, isOpen, on
                     setActiveTab('info');
                     setFormData({
                         code: project.code || '',
+                        name: project.name || '',
                         description: project.description || '',
                         priority: project.priority || 'Medium',
                         status: project.status || 'On Track',
@@ -205,6 +206,7 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({ project, isOpen, on
             onSubmit({
                 ...project,
                 code: formData.code.toUpperCase(),
+                name: formData.name,
                 description: formData.description,
                 priority: formData.priority,
                 status: formData.status,
@@ -243,7 +245,13 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({ project, isOpen, on
                         </div>
                         <div>
                             <h3 className="text-white text-sm font-black uppercase tracking-widest">Edit Proyek</h3>
-                            <p className="text-[#26b9f7] text-[11px] font-mono tracking-widest">{project.name}</p>
+                            <input
+                                type="text"
+                                value={formData.name}
+                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                className="bg-transparent text-[#26b9f7] text-[11px] font-mono tracking-widest border-b border-transparent hover:border-[#26b9f7]/50 focus:border-[#26b9f7] focus:outline-none w-full"
+                                placeholder="Nama Proyek"
+                            />
                         </div>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-[#1e293b] rounded-lg text-slate-500 hover:text-white transition-colors">
