@@ -17,6 +17,8 @@ const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ onSubmit, onBac
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
+    const [success, setSuccess] = useState(false);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
@@ -40,8 +42,10 @@ const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ onSubmit, onBac
         if (!result.success) {
             setError(result.error || 'Terjadi kesalahan');
             setIsLoading(false);
+        } else {
+            setSuccess(true);
+            setIsLoading(false);
         }
-        // Success case is handled by parent (navigates to reset page)
     };
 
     const inputClass = (hasError: boolean) => `
@@ -49,6 +53,29 @@ const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ onSubmit, onBac
     bg-[#0f172a] text-white placeholder:text-slate-500
     ${hasError ? 'border-red-500 bg-red-500/10' : 'border-[#1e293b] focus:border-[#26b9f7] focus:ring-4 focus:ring-[#26b9f7]/10'}
   `;
+
+    if (success) {
+        return (
+            <div className="min-h-screen w-full flex items-center justify-center bg-[#020617] font-display p-8">
+                <div className="w-full max-w-md text-center animate-in fade-in zoom-in-95">
+                    <div className="w-24 h-24 bg-sky-500/20 rounded-full flex items-center justify-center mx-auto mb-8 ring-4 ring-sky-500/10">
+                        <Mail className="text-sky-400 w-12 h-12" />
+                    </div>
+                    <h2 className="text-3xl font-bold text-white mb-3">Cek Email Anda!</h2>
+                    <p className="text-slate-400 mb-8 leading-relaxed">
+                        Kami telah mengirimkan instruksi untuk mereset password ke
+                        <span className="text-sky-400 font-bold"> {email}</span>
+                    </p>
+                    <button
+                        onClick={onBack}
+                        className="w-full bg-[#26b9f7] hover:bg-[#26b9f7]/90 text-[#020617] font-bold py-4 rounded-xl shadow-lg shadow-[#26b9f7]/20 transition-all active:scale-[0.98]"
+                    >
+                        Kembali ke Login
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen w-full flex items-center justify-center bg-[#020617] font-display p-8">

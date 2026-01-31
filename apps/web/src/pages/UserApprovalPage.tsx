@@ -58,8 +58,9 @@ const UserApprovalPage: React.FC<UserApprovalPageProps> = ({ users, roles, onUpd
     // Filter and sort users
     const filteredUsers = useMemo(() => {
         let result = users.filter(user => {
-            // Exclude admin users from the list
-            if (user.role === 'admin') return false;
+            // Exclude current user (optional, but good for safety) - relying on ID check usually better but let's just show everyone for now
+
+            // Search filter
 
             // Search filter
             const matchesSearch =

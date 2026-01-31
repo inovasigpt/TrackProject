@@ -376,21 +376,11 @@ function App() {
   };
 
   const handleForgotPassword = async (email: string) => {
-    const result = await requestPasswordReset(email);
-    if (result.success) {
-      setAuthView('reset');
-    }
-    return result;
+    return await requestPasswordReset(email);
   };
 
   const handleResetPassword = async (newPassword: string) => {
-    const result = await resetPassword(resetToken?.token, newPassword);
-    if (result.success) {
-      setAuthView('login');
-      setSuccessMessage('Password berhasil diubah, silakan login.');
-      setShowSuccessModal(true);
-    }
-    return result;
+    return await resetPassword(resetToken?.token, newPassword);
   };
 
   const handleLogout = () => {
@@ -537,7 +527,7 @@ function App() {
             <CalendarDays size={20} />
           </button>
 
-          {/* Inbox Button with Badge */}
+          {/* Inbox Button with Badge (Hidden)
           <button
             onClick={() => {
               setIsInboxOpen(!isInboxOpen);
@@ -554,6 +544,7 @@ function App() {
               </span>
             )}
           </button>
+          */}
 
           <button
             onClick={() => {
