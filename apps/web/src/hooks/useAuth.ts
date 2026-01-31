@@ -2,19 +2,10 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { api } from '../services/api';
 import type { User, Role } from '@pmo/shared';
 
-// Initial roles fallback (jika API belum ready/error)
-const INITIAL_ROLES: Role[] = [
-    { id: 'role-1', value: 'admin', label: 'Admin', isActive: true },
-    { id: 'role-2', value: 'project_manager', label: 'Project Manager', isActive: true },
-    { id: 'role-3', value: 'developer', label: 'Developer', isActive: true },
-    { id: 'role-4', value: 'designer', label: 'Designer', isActive: true },
-    { id: 'role-5', value: 'stakeholder', label: 'Stakeholder', isActive: true }
-];
-
 export const useAuth = () => {
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [users, setUsers] = useState<User[]>([]);
-    const [roles, setRoles] = useState<Role[]>(INITIAL_ROLES);
+    const [roles, setRoles] = useState<Role[]>([]);
     const [isLoaded, setIsLoaded] = useState(false);
     const [resetToken, setResetToken] = useState<any>(null); // TODO: Implement reset password via API
 
@@ -42,6 +33,7 @@ export const useAuth = () => {
         };
 
         checkAuth();
+        fetchRoles(); // Fetch roles on mount for RegisterPage
         void resetToken;
     }, [resetToken]);
 
@@ -49,7 +41,6 @@ export const useAuth = () => {
     useEffect(() => {
         if (currentUser?.role === 'admin') {
             fetchUsers();
-            fetchRoles();
         }
     }, [currentUser]);
 
@@ -66,9 +57,17 @@ export const useAuth = () => {
 
     const fetchRoles = async () => {
         try {
-            const response = await api.getRoles();
-            if (response.success && response.data) {
-                setRoles(response.data);
+            // Fetch roles from parameters (category='role')
+            const data = await api.getParameters('role');
+            if (data && Array.isArray(data)) {
+                // Map parameter to Role type
+                const mappedRoles: Role[] = data.map((p: any) => ({
+                    id: p.id,
+                    value: p.value,
+                    label: p.label,
+                    isActive: p.isActive !== false // Default to true if undefined
+                }));
+                setRoles(mappedRoles);
             }
         } catch (error) {
             console.error('Failed to fetch roles:', error);
