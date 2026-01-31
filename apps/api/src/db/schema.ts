@@ -28,7 +28,7 @@ export const projects = pgTable('projects', {
     priority: text('priority').default('Medium').notNull(),
     status: text('status').default('Active').notNull(),
     description: text('description'),
-    stream: text('stream'),
+    stream: json('stream').$type<string[]>(),
     icon: text('icon'),
     notes: text('notes'),
     documents: json('documents'), // Store documents as JSON array

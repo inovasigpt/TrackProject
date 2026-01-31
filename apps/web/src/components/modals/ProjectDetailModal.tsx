@@ -121,7 +121,7 @@ export const ProjectDetailContent: React.FC<ProjectDetailContentProps> = ({ proj
                         <div className="p-3 bg-[#020617] border border-[#1e293b] rounded-lg">
                             <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-2">Stream</label>
                             <span className="text-[11px] font-bold text-white tracking-wide">
-                                {project.stream || '-'}
+                                {Array.isArray(project.stream) ? project.stream.join(', ') : (project.stream || '-')}
                             </span>
                         </div>
                         <div className="grid grid-cols-2 gap-4">

@@ -24,7 +24,7 @@ export interface Project {
     id: string;
     name: string;
     code: string;
-    stream?: string;
+    stream?: string[];
     icon?: string;
     description?: string;
     priority?: string;

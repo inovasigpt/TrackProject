@@ -46,7 +46,7 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({ isOpen, onClose, onSu
     const [formData, setFormData] = useState({
         name: '',
         code: '',
-        stream: '',
+        stream: [] as string[],
         description: '',
         priority: 'Medium',
         icon: 'database',
@@ -108,7 +108,7 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({ isOpen, onClose, onSu
             setFormData({
                 name: '',
                 code: '',
-                stream: '',
+                stream: [],
                 description: '',
                 priority: 'Medium',
                 icon: 'database',
@@ -331,15 +331,42 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({ isOpen, onClose, onSu
                                     <div className="space-y-2">
                                         <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest block">Stream</label>
                                         <div className="relative">
-                                            <select
-                                                value={formData.stream}
-                                                onChange={(e) => setFormData({ ...formData, stream: e.target.value })}
-                                                className="w-full bg-[#020617] border border-[#1e293b] rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:ring-2 focus:ring-[#26b9f7]/50 appearance-none cursor-pointer"
-                                            >
-                                                <option value="">Pilih Stream...</option>
-                                                {availableStreams.map(opt => <option key={opt.id} value={opt.label}>{opt.label}</option>)}
-                                            </select>
-                                            <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+                                            {/* Selected Streams Tags */}
+                                            {formData.stream.length > 0 && (
+                                                <div className="flex flex-wrap gap-2 mb-2 p-2 bg-[#020617] border border-[#1e293b] rounded-xl">
+                                                    {formData.stream.map((s) => (
+                                                        <div key={s} className="bg-[#26b9f7]/10 border border-[#26b9f7]/30 text-[#26b9f7] px-2 py-1 rounded-lg text-[10px] flex items-center gap-1">
+                                                            {s}
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setFormData({ ...formData, stream: formData.stream.filter(item => item !== s) })}
+                                                                className="hover:text-white"
+                                                            >
+                                                                <X size={10} />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+
+                                            <div className="relative">
+                                                <select
+                                                    value=""
+                                                    onChange={(e) => {
+                                                        const val = e.target.value;
+                                                        if (val && !formData.stream.includes(val)) {
+                                                            setFormData({ ...formData, stream: [...formData.stream, val] });
+                                                        }
+                                                    }}
+                                                    className="w-full bg-[#020617] border border-[#1e293b] rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:ring-2 focus:ring-[#26b9f7]/50 appearance-none cursor-pointer"
+                                                >
+                                                    <option value="">+ Tambah Stream...</option>
+                                                    {availableStreams
+                                                        .filter(opt => !formData.stream.includes(opt.label))
+                                                        .map(opt => <option key={opt.id} value={opt.label}>{opt.label}</option>)}
+                                                </select>
+                                                <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+                                            </div>
                                         </div>
                                     </div>
 
