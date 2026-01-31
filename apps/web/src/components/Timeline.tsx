@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { TODAY, THEME, WEEK_WIDTH } from '../data/constants';
 import { getXFromDate, getHeaderData } from '../utils/dateUtils';
 import PhaseBar from './PhaseBar';
@@ -80,6 +80,20 @@ const Timeline: React.FC<TimelineProps> = ({ projects, onPhaseClick, scrollRef }
         const totalRows = rowData.totalRows;
         return BASE_TOP_OFFSET + (totalRows * (BAR_HEIGHT + ROW_PADDING)) + ROW_PADDING;
     };
+
+    // Auto-scroll to Today on mount
+    useEffect(() => {
+        if (scrollRef?.current) {
+            const container = scrollRef.current;
+            const containerWidth = container.clientWidth;
+            const targetScroll = Math.max(0, todayX - (containerWidth / 2));
+
+            // Allow layout to settle before scrolling
+            setTimeout(() => {
+                container.scrollTo({ left: targetScroll, behavior: 'smooth' });
+            }, 100);
+        }
+    }, [scrollRef, todayX]);
 
     return (
         <div ref={scrollRef} className="flex-1 overflow-auto custom-scrollbar bg-[#020617] relative">

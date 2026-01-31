@@ -9,7 +9,6 @@ import { hashPassword } from '../lib/auth';
 
 // Constants
 const FILE_PATH = 'D:/Code/pmo/apps/ppa.xlsx';
-const OUTPUT_PATH = 'D:/Code/pmo/apps/ppa_final_v2.xlsx';
 const SHEET_SEARCH = ['proyek', 'project'];
 
 async function main() {
@@ -30,7 +29,7 @@ async function main() {
             role: 'admin',
             status: 'approved',
             avatar: 'https://ui-avatars.com/api/?name=Migrasi&background=random',
-        }).returning();
+        } as any).returning();
         migrasiUser = newUser;
     }
     const CREATOR_ID = migrasiUser.id;
@@ -81,7 +80,7 @@ async function main() {
         NAME: 7,            // "Nama Proyek Baru"
         APP: 17,            // "Aplikasi"
         STREAM: 16,
-        NOTES: 137,         // Corrected from 184 -> 137
+        NOTES: 137,
         STATUS: 167,
         CATEGORY: 3,
 
@@ -94,38 +93,25 @@ async function main() {
         REVISIT: 25,
         START: 9,
         END: 10,
+
+        // Phases (Start, End) - 0-indexed based on console dump
+        RBT_S: 26, RBT_E: 27,
+        RPP_S: 28, RPP_E: 29,
+        KAK_S: 30, KAK_E: 31,
+        PENG_S: 32, PENG_E: 33,
+        DES_S: 34, DES_E: 35,
+        DEV_S: 36, DEV_E: 37,
+        SIT_S: 38, SIT_E: 39,
+        UAT_S: 40, UAT_E: 41,
+        IMP_S: 42, IMP_E: 43,
     };
 
-    // User said skip 2 rows (Headers at 0, 1). Data starts at 2 (Row 3).
     // range: 2 means we start reading data from Row 3.
     const data = XLSX.utils.sheet_to_json(sheet, { header: 1, range: 2, defval: null }) as any[][];
     console.log(`🔄 Processing ${data.length} rows...`);
 
     let successCount = 0;
     const existingCodes = new Set<string>();
-
-    // We will store the UUIDs to write back to Excel
-    // Since we are iterating `data`, we can keep a parallel array or map row index
-    // data[i] corresponds to Excel Row (i + 2 + 1) -> Row (i+3) because 1-based?
-    // Let's just store the updates in memory and write to a new sheet or modify existing.
-
-    // We need to write to the column "System ID". Let's assume it's the last column or specific index.
-    // Let's find the Last Column Index securely or just pick a far one (e.g. Col 200 / 'GS')?
-    // User asked "menyimpan UUID di excel tersebut". 
-    // Let's append to the end of the row.
-
-    // We modify `data` in place by pushing the ID, then write `data` back? 
-    // `sheet_to_json` gives values. If we write back, we lose styles unless we use a library that preserves them.
-    // `xlsx` (SheetJS) basic usage often wipes styles on write unless Pro version or careful manipulation.
-    // The user just wants the data.
-    // Strategy: Update the `sheet` object directly.
-
-    const rowsUpdates: { r: number, c: number, v: string }[] = [];
-    const ID_COL_IDX = 200; // Put ID at column 200 (GS) to be safe/far right
-
-    // Add Header for System ID at Row 0 and 1
-    rowsUpdates.push({ r: 0, c: ID_COL_IDX, v: 'System ID' });
-    rowsUpdates.push({ r: 1, c: ID_COL_IDX, v: 'System ID' });
 
     for (let i = 0; i < data.length; i++) {
         const row = data[i];
@@ -137,15 +123,14 @@ async function main() {
         };
 
         const no = getVal(IDX.NO);
-        const noSub = getVal(IDX.NO_SUB);
         const name = getVal(IDX.NAME);
         const app = getVal(IDX.APP);
+        const noSub = getVal(IDX.NO_SUB);
 
         if (!name && !no) continue;
 
         // Generate Code
         const appCode = app.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().substring(0, 10);
-
         let baseCode = String(no).trim();
         if (!/^p-/i.test(baseCode)) {
             baseCode = `P-${baseCode}`;
@@ -183,17 +168,14 @@ async function main() {
 
         // Description
         const descParts = [];
-        // Dates & Helper
         const fmtDate = (v: any) => {
             if (!v) return null;
-            // Excel date range: > 25569 (1970) and < 60000 (2064) approx
             if (typeof v === 'number' && v > 25569 && v < 60000) {
                 const d = new Date(Math.round((v - 25569) * 86400 * 1000));
                 return d.toISOString().split('T')[0];
             }
             return String(v);
         };
-
         const pushDesc = (label: string, val: any) => {
             if (val && val !== '-' && val !== '0') {
                 const formatted = fmtDate(val);
@@ -201,20 +183,18 @@ async function main() {
             }
         };
 
-        pushDesc('Target', row[IDX.DESC_TARGET]); // Pass raw row value
+        pushDesc('Target', row[IDX.DESC_TARGET]);
         pushDesc('Aplikasi', app);
         pushDesc('PIC Satker', getVal(IDX.PIC_SATKER));
         pushDesc('Deliverables', getVal(IDX.DELIVERABLES));
         pushDesc('Stratifikasi', getVal(IDX.STRATIFICATION));
         pushDesc('Leveling', getVal(IDX.LEVELING));
-        pushDesc('Revisit', row[IDX.REVISIT]); // Revisit might also be date
+        pushDesc('Revisit', row[IDX.REVISIT]);
 
         const start = fmtDate(row[IDX.START]);
         const end = fmtDate(row[IDX.END]);
-
         if (start) descParts.push(`Start: ${start}`);
         if (end) descParts.push(`End: ${end}`);
-
         const description = descParts.join('\n');
 
         try {
@@ -227,24 +207,12 @@ async function main() {
                 stream: streamArray,
                 notes: getVal(IDX.NOTES),
                 createdBy: CREATOR_ID,
-            }).returning({ id: projects.id });
+            } as any).returning({ id: projects.id });
 
             successCount++;
             process.stdout.write('.');
 
-            // Queue Excel Update
-            // Row index in sheet: 2 (skipped rows) + i (current index) = 2 + i.
-            // BUT, XLSX ranges are 0-indexed.
-            // We skipped 2 rows, so data[0] is actually Row 2 (0, 1, 2).
-            // Let's verify: sheet_to_json with range 2 means it starts reading at index 2.
-            // So data[0] comes from row index 2.
-            const rowIndex = 2 + i;
-            rowsUpdates.push({ r: rowIndex, c: ID_COL_IDX, v: inserted.id });
-
             // 6. Insert Phases
-            const phasesToInsert = [];
-
-            // Helper to parsing excel date number
             const parseDate = (v: any) => {
                 if (!v) return null;
                 if (typeof v === 'number' && v > 25569 && v < 60000) {
@@ -253,68 +221,51 @@ async function main() {
                 return null;
             };
 
-            const getPhaseDates = (startIdx: number, endIdx: number) => {
-                return {
-                    start: parseDate(row[startIdx]),
-                    end: parseDate(row[endIdx])
-                };
+            const getPhaseDates = (sIdx: number, eIdx: number) => {
+                const s = parseDate(row[sIdx]);
+                const e = parseDate(row[eIdx]);
+                return { start: s, end: e };
             };
 
-            const mergePhases = (ranges: { start: Date | null, end: Date | null }[]) => {
-                let min: Date | null = null;
-                let max: Date | null = null;
-                for (const r of ranges) {
-                    if (r.start) {
-                        if (!min || r.start < min) min = r.start;
-                    }
-                    if (r.end) {
-                        if (!max || r.end > max) max = r.end;
-                    }
+            const mergeDates = (p1: { start: Date | null, end: Date | null }, p2: { start: Date | null, end: Date | null }) => {
+                let start = p1.start;
+                if (p2.start && (!start || p2.start < start)) start = p2.start;
+
+                let end = p1.end;
+                if (p2.end && (!end || p2.end > end)) end = p2.end;
+                return { start, end };
+            };
+
+            const phasesToInsert: any[] = [];
+
+            const addPhase = (name: string, dates: { start: Date | null, end: Date | null }) => {
+                if (phaseMap[name]) {
+                    phasesToInsert.push({
+                        projectId: inserted.id,
+                        name: phaseMap[name],
+                        startDate: dates.start,
+                        endDate: dates.end,
+                        status: 'pending'
+                    });
                 }
-                return { start: min, end: max };
             };
 
-            // Requirement (RBT: 20-21, RPP: 22-23)
-            const req = mergePhases([getPhaseDates(20, 21), getPhaseDates(22, 23)]);
-            if (phaseMap['Requirement'] && (req.start || req.end)) {
-                phasesToInsert.push({ projectId: inserted.id, name: phaseMap['Requirement'], startDate: req.start, endDate: req.end });
-            }
+            // Requirement: RBT + RPP
+            const rbt = getPhaseDates(IDX.RBT_S, IDX.RBT_E);
+            const rpp = getPhaseDates(IDX.RPP_S, IDX.RPP_E);
+            addPhase('Requirement', mergeDates(rbt, rpp));
 
-            // Procurement (KAK: 24-25, Pengadaan: 26-27)
-            const proc = mergePhases([getPhaseDates(24, 25), getPhaseDates(26, 27)]);
-            if (phaseMap['Procurement'] && (proc.start || proc.end)) {
-                phasesToInsert.push({ projectId: inserted.id, name: phaseMap['Procurement'], startDate: proc.start, endDate: proc.end });
-            }
+            // Procurement: KAK + Pengadaan
+            const kak = getPhaseDates(IDX.KAK_S, IDX.KAK_E);
+            const peng = getPhaseDates(IDX.PENG_S, IDX.PENG_E);
+            addPhase('Procurement', mergeDates(kak, peng));
 
-            // Design (28-29)
-            const des = getPhaseDates(28, 29);
-            if (phaseMap['Design'] && (des.start || des.end)) {
-                phasesToInsert.push({ projectId: inserted.id, name: phaseMap['Design'], startDate: des.start, endDate: des.end });
-            }
-
-            // Development (30-31)
-            const dev = getPhaseDates(30, 31);
-            if (phaseMap['Development'] && (dev.start || dev.end)) {
-                phasesToInsert.push({ projectId: inserted.id, name: phaseMap['Development'], startDate: dev.start, endDate: dev.end });
-            }
-
-            // SIT (32-33)
-            const sit = getPhaseDates(32, 33);
-            if (phaseMap['SIT'] && (sit.start || sit.end)) {
-                phasesToInsert.push({ projectId: inserted.id, name: phaseMap['SIT'], startDate: sit.start, endDate: sit.end });
-            }
-
-            // UAT (34-35)
-            const uat = getPhaseDates(34, 35);
-            if (phaseMap['UAT'] && (uat.start || uat.end)) {
-                phasesToInsert.push({ projectId: inserted.id, name: phaseMap['UAT'], startDate: uat.start, endDate: uat.end });
-            }
-
-            // Implementation (36-37)
-            const imp = getPhaseDates(36, 37);
-            if (phaseMap['Implementation'] && (imp.start || imp.end)) {
-                phasesToInsert.push({ projectId: inserted.id, name: phaseMap['Implementation'], startDate: imp.start, endDate: imp.end });
-            }
+            // Others
+            addPhase('Design', getPhaseDates(IDX.DES_S, IDX.DES_E));
+            addPhase('Development', getPhaseDates(IDX.DEV_S, IDX.DEV_E));
+            addPhase('SIT', getPhaseDates(IDX.SIT_S, IDX.SIT_E));
+            addPhase('UAT', getPhaseDates(IDX.UAT_S, IDX.UAT_E));
+            addPhase('Implementation', getPhaseDates(IDX.IMP_S, IDX.IMP_E));
 
             if (phasesToInsert.length > 0) {
                 await db.insert(phases).values(phasesToInsert);
@@ -326,26 +277,7 @@ async function main() {
     }
 
     console.log(`\n✅ Database Insert Done! Success: ${successCount}`);
-
-    // 5. Write Back to Excel
-    console.log('💾 Writing IDs back to Excel...');
-
-    // Apply updates
-    rowsUpdates.forEach(u => {
-        const cellRef = XLSX.utils.encode_cell({ r: u.r, c: u.c });
-        sheet[cellRef] = { v: u.v, t: 's' };
-    });
-
-    // Update range if needed
-    const range = XLSX.utils.decode_range(sheet['!ref']);
-    if (range.e.c < ID_COL_IDX) {
-        range.e.c = ID_COL_IDX;
-        sheet['!ref'] = XLSX.utils.encode_range(range);
-    }
-
-    XLSX.writeFile(workbook, OUTPUT_PATH);
-    console.log(`✅ Saved updated file to: ${OUTPUT_PATH}`);
-
+    console.log('🏁 Migration Completed (No Excel Write-back).');
     process.exit(0);
 }
 

@@ -18,8 +18,8 @@ export const getHeaderData = () => {
     const weeks = [];
     const start = new Date(TIMELINE_START_DATE);
 
-    // Generate 6 months of data
-    for (let i = 0; i < 6; i++) {
+    // Generate 60 months of data (5 years)
+    for (let i = 0; i < 60; i++) {
         const monthDate = new Date(start.getFullYear(), start.getMonth() + i, 1);
         const monthName = monthDate.toLocaleString('default', { month: 'long' });
         const year = monthDate.getFullYear();
@@ -38,8 +38,8 @@ export const getHeaderData = () => {
         current.setDate(current.getDate() + 1);
     }
 
-    // Generate 26 weeks of data
-    for (let i = 0; i < 26; i++) {
+    // Generate 260 weeks of data (5 years)
+    for (let i = 0; i < 260; i++) {
         weeks.push({
             date: current.getDate(),
             full: current.toDateString(),

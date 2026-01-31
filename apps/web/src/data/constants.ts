@@ -12,7 +12,7 @@ export const THEME = {
 export const TODAY = new Date();
 
 // Timeline configuration
-export const TIMELINE_START_DATE = new Date('2026-01-01');
+export const TIMELINE_START_DATE = new Date('2025-01-01');
 export const WEEK_WIDTH = 120; // pixels per week
 export const PIXELS_PER_DAY = WEEK_WIDTH / 7;
 
