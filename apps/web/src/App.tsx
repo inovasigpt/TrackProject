@@ -11,9 +11,10 @@ import {
   LogOut,
   Users,
   Lock,
-  ChevronDown,
-  Settings,
   AlertTriangle,
+  Bug,
+  Settings,
+  ChevronDown,
 } from 'lucide-react';
 
 // Components
@@ -31,6 +32,7 @@ import DailyOverviewSlideOver from './components/modals/DailyOverviewModal';
 import InboxSlideOver from './components/modals/InboxModal';
 import ChangePasswordModal from './components/modals/ChangePasswordModal';
 import SuccessModal from './components/modals/SuccessModal';
+import ErrorModal from './components/modals/ErrorModal';
 
 // Pages
 import {
@@ -40,6 +42,7 @@ import {
   ResetPasswordPage,
   UserApprovalPage
 } from './pages';
+import BugTrackerPage from './pages/BugTrackerPage';
 
 // Hooks
 import { useProjectData } from './hooks/useProjectData';
@@ -81,6 +84,9 @@ function App() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const profileDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Navigation State
+  const [currentView, setCurrentView] = useState<'dashboard' | 'bugtracker'>('dashboard');
 
   // Check URL for reset token
   useEffect(() => {
@@ -448,6 +454,17 @@ function App() {
     }
   }
 
+  // Bug Tracker Page
+  if (currentView === 'bugtracker') {
+    return (
+      <BugTrackerPage
+        currentUser={currentUser}
+        onLogout={handleLogout}
+        onBack={() => setCurrentView('dashboard')}
+      />
+    );
+  }
+
   // Admin User Approval Page
   if (showUserApproval && isAdmin) {
     return (
@@ -556,6 +573,17 @@ function App() {
             className={`p-2 hover:bg-[#1e293b] rounded-lg transition-colors ${isAuditOpen ? 'text-[#26b9f7]' : 'text-slate-400'}`}
           >
             <History size={20} />
+          </button>
+
+          <div className="w-px h-6 bg-[#1e293b] mx-1"></div>
+
+          {/* Bug Tracker Button */}
+          <button
+            onClick={() => setCurrentView('bugtracker')}
+            className="p-2 hover:bg-[#1e293b] rounded-lg transition-colors text-slate-400"
+            title="Bug Tracker"
+          >
+            <Bug size={20} />
           </button>
 
           <div className="w-px h-6 bg-[#1e293b] mx-1"></div>
@@ -797,6 +825,12 @@ function App() {
         isOpen={showSuccessModal}
         onClose={() => setShowSuccessModal(false)}
         message={successMessage}
+      />
+
+      <ErrorModal
+        isOpen={showError}
+        onClose={() => setShowError(false)}
+        message={error || 'Terjadi kesalahan'}
       />
 
     </div>

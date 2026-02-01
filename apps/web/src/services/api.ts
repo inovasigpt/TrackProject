@@ -202,6 +202,33 @@ class ApiClient {
             method: 'DELETE',
         });
     }
+
+    // Bugs
+    async getBugs() {
+        return this.request<{ success: boolean; data: any[] }>('/bugs');
+    }
+
+    async createBug(bug: any) {
+        return this.request<{ success: boolean; data: any }>('/bugs', {
+            method: 'POST',
+            body: bug,
+        });
+    }
+
+    async updateBug(id: string, updates: any) {
+        return this.request<{ success: boolean; data: any }>(`/bugs/${id}`, {
+            method: 'PUT',
+            body: updates,
+        });
+    }
+
+    async deleteImage(url: string) {
+        return this.request<{ success: boolean; result?: any; error?: string }>('/upload/delete', {
+            method: 'POST',
+            body: { url },
+        });
+    }
+
     async getAuditLogs() {
         return this.request('/audit');
     }

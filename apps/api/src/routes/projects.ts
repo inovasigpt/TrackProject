@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { eq, or, sql } from 'drizzle-orm';
+import { eq, or, sql, and } from 'drizzle-orm';
 import { db, projects, phases, projectPics, users, parameters } from '../db/index.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { auditService } from '../services/auditService.js';
@@ -142,7 +142,7 @@ projectRoutes.post('/', async (c) => {
             'CREATE',
             'PROJECT',
             newProject.id,
-            `Project "${newProject.name}" created (Status: ${newProject.status}, Priority: ${newProject.priority}, Stream: ${stream || '-'})`
+            `Project "${newProject.name}" (${newProject.code}) created (Status: ${newProject.status}, Priority: ${newProject.priority}, Stream: ${stream || '-'})`
         );
 
         return c.json({
@@ -175,9 +175,16 @@ projectRoutes.put('/:id', async (c) => {
         }
 
         const user = c.get('user');
-        // Permission Check: Admin OR Creator
-        if (user.role !== 'admin' && existingProject.createdBy !== user.userId) {
-            return c.json({ success: false, error: 'Unauthorized: Only Admin or Creator can edit this project' }, 403);
+
+        // Check if user is a PIC
+        const [isPic] = await db.select()
+            .from(projectPics)
+            .where(and(eq(projectPics.projectId, id), eq(projectPics.userId, user.userId)))
+            .limit(1);
+
+        // Permission Check: Admin OR Creator OR PIC
+        if (user.role !== 'admin' && existingProject.createdBy !== user.userId && !isPic) {
+            return c.json({ success: false, error: 'Unauthorized: Only Admin, Creator or PIC can edit this project' }, 403);
         }
 
         // 1. Update project details
@@ -284,7 +291,7 @@ projectRoutes.put('/:id', async (c) => {
 
         let detail = changes.length > 0
             ? `Project updated. Changes: ${changes.join(', ')}`
-            : `Project "${updated.name}" updated (No major changes detected)`;
+            : `Project "${updated.name}" (${updated.code}) updated (No major changes detected)`;
 
         await auditService.log(
             user?.userId,

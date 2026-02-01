@@ -116,3 +116,46 @@ export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
 
 export type AuditLog = typeof auditLogs.$inferSelect;
 export type NewAuditLog = typeof auditLogs.$inferInsert;
+
+import { AnyPgColumn } from 'drizzle-orm/pg-core';
+
+// Bugs table
+export const bugs = pgTable('bugs', {
+    id: uuid('id').primaryKey().defaultRandom(),
+    code: text('code').notNull().unique(), // GMMP-101
+    summary: text('summary').notNull(),
+    description: text('description'),
+    reporterId: uuid('reporter_id').references(() => users.id, { onDelete: 'set null' }),
+    status: text('status').default('OPEN').notNull(),
+    priority: text('priority').default('Medium').notNull(),
+    type: text('type').default('Bug').notNull(),
+    projectId: uuid('project_id').references(() => projects.id, { onDelete: 'cascade' }),
+    parentId: uuid('parent_id').references((): AnyPgColumn => bugs.id, { onDelete: 'set null' }),
+    components: json('components').$type<string[]>(),
+    labels: json('labels').$type<string[]>(),
+    attachments: json('attachments').$type<string[]>(), // Array of URLs
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const bugsRelations = relations(bugs, ({ one, many }) => ({
+    reporter: one(users, {
+        fields: [bugs.reporterId],
+        references: [users.id],
+    }),
+    project: one(projects, {
+        fields: [bugs.projectId],
+        references: [projects.id],
+    }),
+    parent: one(bugs, {
+        fields: [bugs.parentId],
+        references: [bugs.id],
+        relationName: 'child_bugs',
+    }),
+    children: many(bugs, {
+        relationName: 'child_bugs',
+    }),
+}));
+
+export type Bug = typeof bugs.$inferSelect;
+export type NewBug = typeof bugs.$inferInsert;

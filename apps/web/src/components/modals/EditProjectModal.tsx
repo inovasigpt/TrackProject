@@ -171,7 +171,7 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({ project, isOpen, on
         const n = [...phases];
         (n[i] as any)[field] = value;
         setPhases(n);
-        setErrors(prev => { const e = { ...prev }; delete e[`phase_${i} `]; return e; });
+        setErrors(prev => { const e = { ...prev }; delete e[`phase_${i}`]; return e; });
     };
 
     const addDocument = () => setDocuments([...documents, { name: '', url: '' }]);
@@ -184,9 +184,9 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({ project, isOpen, on
         if (validPics.length === 0) newErrors.pics = 'Minimal satu PIC';
         if (phases.length === 0) newErrors.phases = 'Minimal satu fase';
         else phases.forEach((phase, i) => {
-            if (!phase.startDate) newErrors[`phase_${i} `] = 'Start Date wajib';
-            else if (!phase.endDate) newErrors[`phase_${i} `] = 'End Date wajib';
-            else if (new Date(phase.endDate!) <= new Date(phase.startDate!)) newErrors[`phase_${i} `] = 'End Date harus > Start Date';
+            if (!phase.startDate) newErrors[`phase_${i}`] = 'Start Date wajib';
+            else if (!phase.endDate) newErrors[`phase_${i}`] = 'End Date wajib';
+            else if (new Date(phase.endDate!) <= new Date(phase.startDate!)) newErrors[`phase_${i}`] = 'End Date harus > Start Date';
         });
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
