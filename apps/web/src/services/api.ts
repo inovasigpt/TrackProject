@@ -232,6 +232,17 @@ class ApiClient {
     async getAuditLogs() {
         return this.request('/audit');
     }
+
+    async getUploadSignature() {
+        return this.request<{ signature: string, timestamp: number, cloudName: string, apiKey: string }>('/upload/signature');
+    }
+
+    async deleteImage(url: string) {
+        return this.request('/upload/delete', {
+            method: 'POST',
+            body: { url }
+        });
+    }
 }
 
 export const api = new ApiClient(API_URL);

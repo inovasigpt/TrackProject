@@ -2,6 +2,7 @@
 import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { X, UploadCloud, Image as ImageIcon, Loader, Eye } from 'lucide-react';
+import { api } from '../services/api';
 
 interface ImageUploadProps {
     value: string[];
@@ -18,13 +19,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ value = [], onChange, disable
 
         try {
             // 1. Get Signature from Backend
-            // Use relative path '/api' which will be handled by Vite proxy or deployed URL
-            // But here we are in a component, so we should rely on the configured API URL.
-            // Let's use the explicit localhost:3001 if we want to be quick, or better, reuse the api service constant if exported.
-            // For now, hardcoding correct port: 3001
-            const signatureRes = await fetch('http://localhost:3001/api/upload/signature');
-            if (!signatureRes.ok) throw new Error('Failed to get upload signature');
-            const { signature, timestamp, cloudName, apiKey } = await signatureRes.json();
+            const { signature, timestamp, cloudName, apiKey } = await api.getUploadSignature();
 
             // 2. Upload to Cloudinary
             const uploadPromises = acceptedFiles.map(async (file) => {
