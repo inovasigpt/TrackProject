@@ -643,7 +643,7 @@ const BugTrackerPage = ({ currentUser, onLogout, onBack }: { currentUser: any, o
                                             >
                                                 <option value="" disabled>Select Project</option>
                                                 {projects
-                                                    .filter(p => p.status === 'Active' && !p.archived)
+                                                    .filter(p => !p.archived)
                                                     .map(p => (
                                                         <option key={p.id} value={p.id}>{p.name} ({p.code})</option>
                                                     ))
