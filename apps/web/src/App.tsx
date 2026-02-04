@@ -13,6 +13,7 @@ import {
   Lock,
   AlertTriangle,
   Bug,
+  ClipboardCheck,
   Settings,
   ChevronDown,
 } from 'lucide-react';
@@ -40,7 +41,8 @@ import {
   RegisterPage,
   ForgotPasswordPage,
   ResetPasswordPage,
-  UserApprovalPage
+  UserApprovalPage,
+  ScenarioPage
 } from './pages';
 import BugTrackerPage from './pages/BugTrackerPage';
 
@@ -86,7 +88,7 @@ function App() {
   const profileDropdownRef = useRef<HTMLDivElement>(null);
 
   // Navigation State
-  const [currentView, setCurrentView] = useState<'dashboard' | 'bugtracker'>('dashboard');
+  const [currentView, setCurrentView] = useState<'dashboard' | 'bugtracker' | 'scenarios'>('dashboard');
 
   // Check URL for reset token
   useEffect(() => {
@@ -465,6 +467,16 @@ function App() {
     );
   }
 
+  // UAT Scenario Page
+  if (currentView === 'scenarios') {
+    return (
+      <ScenarioPage
+        currentUser={currentUser}
+        onBack={() => setCurrentView('dashboard')}
+      />
+    );
+  }
+
   // Admin User Approval Page
   if (showUserApproval && isAdmin) {
     return (
@@ -584,6 +596,15 @@ function App() {
             title="Bug Tracker"
           >
             <Bug size={20} />
+          </button>
+
+          {/* UAT Scenarios Button */}
+          <button
+            onClick={() => setCurrentView('scenarios')}
+            className="p-2 hover:bg-[#1e293b] rounded-lg transition-colors text-slate-400"
+            title="UAT Scenarios"
+          >
+            <ClipboardCheck size={20} />
           </button>
 
           <div className="w-px h-6 bg-[#1e293b] mx-1"></div>

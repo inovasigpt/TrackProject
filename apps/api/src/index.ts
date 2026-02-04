@@ -13,6 +13,7 @@ import parametersRouter from './routes/parameters.js';
 import auditRoutes from './routes/audit.js';
 import bugRoutes from './routes/bugs.js';
 import uploadRoutes from './routes/upload.js';
+import scenarioRoutes from './routes/scenarios.js';
 
 
 const app = new Hono().basePath('/api');
@@ -26,6 +27,7 @@ app.use('*', cors({
         'http://localhost:5175',
         'http://localhost:5176',
         'http://localhost:3000',
+        'http://103.150.117.99:5173',
         'https://trackproject-ivory.vercel.app',
         process.env.FRONTEND_URL || '',
         process.env.VITE_VERCEL_URL || '',
@@ -77,6 +79,7 @@ app.route('/parameters', parametersRouter);
 app.route('/audit', auditRoutes);
 app.route('/bugs', bugRoutes);
 app.route('/upload', uploadRoutes);
+app.route('/scenarios', scenarioRoutes);
 
 // Error handler
 app.onError((err, c) => {
@@ -94,6 +97,7 @@ if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
     serve({
         fetch: app.fetch,
         port,
+        hostname: '0.0.0.0',
     });
 }
 

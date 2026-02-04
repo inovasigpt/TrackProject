@@ -159,3 +159,37 @@ export const bugsRelations = relations(bugs, ({ one, many }) => ({
 
 export type Bug = typeof bugs.$inferSelect;
 export type NewBug = typeof bugs.$inferInsert;
+
+// Scenarios table
+export const scenarios = pgTable('scenarios', {
+    id: uuid('id').primaryKey().defaultRandom(),
+    projectId: uuid('project_id').references(() => projects.id, { onDelete: 'cascade' }).notNull(),
+    updatedBy: uuid('updated_by').references(() => users.id, { onDelete: 'set null' }),
+    scenarioNo: text('scenario_no'),
+    functionalId: text('functional_id'),
+    title: text('title').notNull(),
+    script: text('script'),
+    steps: text('steps'),
+    preRequisite: text('pre_requisite'),
+    component: text('component'),
+    expectedResult: text('expected_result'),
+    satker: text('satker'),
+    status: text('status').default('Pending').notNull(),
+    notes: text('notes'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const scenariosRelations = relations(scenarios, ({ one }) => ({
+    project: one(projects, {
+        fields: [scenarios.projectId],
+        references: [projects.id],
+    }),
+    user: one(users, {
+        fields: [scenarios.updatedBy],
+        references: [users.id],
+    }),
+}));
+
+export type Scenario = typeof scenarios.$inferSelect;
+export type NewScenario = typeof scenarios.$inferInsert;

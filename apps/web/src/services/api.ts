@@ -243,6 +243,31 @@ class ApiClient {
             body: { url }
         });
     }
+
+    // Scenarios
+    async getScenarios(projectId: string) {
+        return this.request<{ success: boolean; data: any[] }>(`/scenarios?projectId=${projectId}`);
+    }
+
+    async createScenario(scenario: any) {
+        return this.request<{ success: boolean; data: any }>('/scenarios', {
+            method: 'POST',
+            body: scenario,
+        });
+    }
+
+    async updateScenario(id: string, updates: any) {
+        return this.request<{ success: boolean; data: any }>(`/scenarios/${id}`, {
+            method: 'PATCH',
+            body: updates,
+        });
+    }
+
+    async deleteScenario(id: string) {
+        return this.request<{ success: boolean }>(`/scenarios/${id}`, {
+            method: 'DELETE',
+        });
+    }
 }
 
 export const api = new ApiClient(API_URL);

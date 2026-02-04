@@ -83,3 +83,22 @@ export interface Message {
     isRead: boolean;
     preview: string;
 }
+
+export interface Scenario {
+    id: string;
+    projectId: string;
+    scenarioNo?: string;
+    functionalId?: string;
+    title: string;
+    script?: string;
+    steps?: string;
+    preRequisite?: string;
+    component?: string;
+    expectedResult?: string;
+    satker?: string;
+    status: 'Pending' | 'Pass' | 'Fail';
+    notes?: string;
+    updatedBy?: string;
+    updatedAt?: string;
+    createdAt: string;
+}
