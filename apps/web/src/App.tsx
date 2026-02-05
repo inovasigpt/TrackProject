@@ -44,6 +44,7 @@ import {
   UserApprovalPage,
   ScenarioPage
 } from './pages';
+import ScenarioDashboardPage from './pages/ScenarioDashboardPage';
 import BugTrackerPage from './pages/BugTrackerPage';
 
 // Hooks
@@ -88,7 +89,7 @@ function App() {
   const profileDropdownRef = useRef<HTMLDivElement>(null);
 
   // Navigation State
-  const [currentView, setCurrentView] = useState<'dashboard' | 'bugtracker' | 'scenarios'>('dashboard');
+  const [currentView, setCurrentView] = useState<'dashboard' | 'bugtracker' | 'scenarios' | 'scenario-dashboard'>('dashboard');
 
   // Check URL for reset token
   useEffect(() => {
@@ -473,6 +474,16 @@ function App() {
       <ScenarioPage
         currentUser={currentUser}
         onBack={() => setCurrentView('dashboard')}
+        onOpenDashboard={() => setCurrentView('scenario-dashboard')}
+      />
+    );
+  }
+
+  // UAT Dashboard Page
+  if (currentView === 'scenario-dashboard') {
+    return (
+      <ScenarioDashboardPage
+        onBack={() => setCurrentView('scenarios')}
       />
     );
   }
