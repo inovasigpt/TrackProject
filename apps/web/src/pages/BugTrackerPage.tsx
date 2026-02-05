@@ -35,6 +35,7 @@ const BugTrackerPage = ({ currentUser, onLogout, onBack }: { currentUser: any, o
     // Filters
     const [selectedProject, setSelectedProject] = useState<string>('');
     const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
+    const [selectedReporter, setSelectedReporter] = useState<string>('ALL');
 
     // Unified Form State
     const [formData, setFormData] = useState({
@@ -219,7 +220,8 @@ const BugTrackerPage = ({ currentUser, onLogout, onBack }: { currentUser: any, o
     const filteredBugsForList = bugs.filter(b => {
         const matchProject = !selectedProject || b.project?.id === selectedProject;
         const matchStatus = selectedStatus === 'ALL' || b.status === selectedStatus;
-        return matchProject && matchStatus;
+        const matchReporter = selectedReporter === 'ALL' || b.reporter?.id === selectedReporter;
+        return matchProject && matchStatus && matchReporter;
     });
 
 
@@ -228,6 +230,9 @@ const BugTrackerPage = ({ currentUser, onLogout, onBack }: { currentUser: any, o
     const itemsPerPage = 20;
     const totalPages = Math.ceil(filteredBugsForList.length / itemsPerPage);
     const paginatedBugs = filteredBugsForList.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+    // Get unique reporters for filter dropdown
+    const reporters = Array.from(new Map(bugs.filter(b => b.reporter).map(b => [b.reporter.id, b.reporter])).values());
 
     // Audit Logs State
     const [auditLogs, setAuditLogs] = useState<any[]>([]);
@@ -389,16 +394,29 @@ const BugTrackerPage = ({ currentUser, onLogout, onBack }: { currentUser: any, o
                         {/* Filter Results */}
                         <DashboardCard title="All Issues"
                             action={
-                                <div className="relative">
-                                    <select
-                                        value={selectedStatus}
-                                        onChange={(e) => setSelectedStatus(e.target.value)}
-                                        className="bg-[#22272b] border border-[#3c444d] text-xs rounded pl-2 pr-6 py-1 focus:border-blue-500 outline-none appearance-none"
-                                    >
-                                        <option value="ALL">All Status</option>
-                                        {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-                                    </select>
-                                    <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                                <div className="flex gap-2">
+                                    <div className="relative">
+                                        <select
+                                            value={selectedReporter}
+                                            onChange={(e) => { setSelectedReporter(e.target.value); setCurrentPage(1); }}
+                                            className="bg-[#22272b] border border-[#3c444d] text-xs rounded pl-2 pr-6 py-1 focus:border-blue-500 outline-none appearance-none"
+                                        >
+                                            <option value="ALL">All Reporters</option>
+                                            {reporters.map((r: any) => <option key={r.id} value={r.id}>{r.username}</option>)}
+                                        </select>
+                                        <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                                    </div>
+                                    <div className="relative">
+                                        <select
+                                            value={selectedStatus}
+                                            onChange={(e) => { setSelectedStatus(e.target.value); setCurrentPage(1); }}
+                                            className="bg-[#22272b] border border-[#3c444d] text-xs rounded pl-2 pr-6 py-1 focus:border-blue-500 outline-none appearance-none"
+                                        >
+                                            <option value="ALL">All Status</option>
+                                            {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                                        </select>
+                                        <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                                    </div>
                                 </div>
                             }
                         >

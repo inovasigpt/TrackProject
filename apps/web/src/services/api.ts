@@ -237,13 +237,6 @@ class ApiClient {
         return this.request<{ signature: string, timestamp: number, cloudName: string, apiKey: string }>('/upload/signature');
     }
 
-    async deleteImage(url: string) {
-        return this.request('/upload/delete', {
-            method: 'POST',
-            body: { url }
-        });
-    }
-
     // Scenarios
     async getScenarios(projectId: string) {
         return this.request<{ success: boolean; data: any[] }>(`/scenarios?projectId=${projectId}`);

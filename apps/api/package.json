@@ -16,11 +16,13 @@
         "@hono/zod-validator": "^0.7.6",
         "@neondatabase/serverless": "^0.10.0",
         "bcryptjs": "^2.4.3",
+        "cheerio": "^1.2.0",
         "cloudinary": "^2.9.0",
         "dotenv": "^16.4.0",
         "drizzle-orm": "^0.36.0",
         "hono": "^4.6.0",
         "jsonwebtoken": "^9.0.2",
+        "mammoth": "^1.11.0",
         "resend": "^6.9.1",
         "xlsx": "^0.18.5",
         "zod": "^4.3.6"
