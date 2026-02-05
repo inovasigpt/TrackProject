@@ -42,9 +42,9 @@ import {
   ForgotPasswordPage,
   ResetPasswordPage,
   UserApprovalPage,
-  ScenarioPage
+  ScenarioPage,
+  ScenarioDashboardPage
 } from './pages';
-import ScenarioDashboardPage from './pages/ScenarioDashboardPage';
 import BugTrackerPage from './pages/BugTrackerPage';
 
 // Hooks
