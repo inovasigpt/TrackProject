@@ -21,7 +21,7 @@ import ImageUpload from '../components/ImageUpload';
 import { api } from '../services/api';
 
 // Constants
-const ISSUE_TYPES = ['Bug', 'New Feature'];
+const ISSUE_TYPES = ['Bug', 'New Feature', 'Request'];
 const PRIORITIES = ['Fatal', 'Major', 'Minor', 'Kosmetik'];
 const STATUSES = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'NOT_OK', 'CLOSED', 'UNDER_REVIEW'];
 
