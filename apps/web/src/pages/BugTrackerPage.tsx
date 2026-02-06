@@ -571,6 +571,11 @@ const BugTrackerPage = ({ currentUser, onLogout, onBack }: { currentUser: any, o
                             </div>
                         </DashboardCard>
 
+                        {/* Request Report Statistic (Right) */}
+                        <DashboardCard title="Request Report Statistic">
+                            <StatTable bugs={bugs.filter(b => b.type === 'Request' && (!selectedProject || b.project?.id === selectedProject))} />
+                        </DashboardCard>
+
                         {/* New Feature Report Statistic (Right) */}
                         <DashboardCard title="New Feature Report Statistic">
                             <StatTable bugs={bugs.filter(b => b.type === 'New Feature' && (!selectedProject || b.project?.id === selectedProject))} />
