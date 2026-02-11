@@ -327,10 +327,10 @@ const BugTrackerPage = ({ currentUser, onLogout, onBack }: { currentUser: any, o
                         </div>
                         Bug Tracker
                     </div>
-                    <div className="hidden md:flex gap-4 text-sm font-medium ml-4">
+                    <div className="flex gap-4 text-sm font-medium ml-4">
                         <button
                             onClick={openCreateModal}
-                            className="bg-[#0c66e4] hover:bg-[#0055cc] text-white px-3 py-1 rounded font-semibold transition-colors"
+                            className="bg-[#0c66e4] hover:bg-[#0055cc] text-white px-3 py-1 rounded font-semibold transition-colors whitespace-nowrap"
                         >
                             Create
                         </button>
