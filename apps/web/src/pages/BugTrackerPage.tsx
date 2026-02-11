@@ -24,6 +24,7 @@ import { api } from '../services/api';
 const ISSUE_TYPES = ['Bug', 'New Feature', 'Request'];
 const PRIORITIES = ['Fatal', 'Major', 'Minor', 'Kosmetik'];
 const STATUSES = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'NOT_OK', 'CLOSED', 'UNDER_REVIEW'];
+const STAGES = ['UAT', 'SIT', 'UT', 'OPS'];
 
 const BugTrackerPage = ({ currentUser, onLogout, onBack }: { currentUser: any, onLogout: () => void, onBack?: () => void }) => {
     const [bugs, setBugs] = useState<any[]>([]);
@@ -44,6 +45,7 @@ const BugTrackerPage = ({ currentUser, onLogout, onBack }: { currentUser: any, o
         priority: 'Major', // Default
         type: 'Bug',
         status: 'OPEN',
+        stage: 'UAT', // New field for Stage
         components: '',
         labels: '',
         attachments: [] as string[] | string,
@@ -86,6 +88,7 @@ const BugTrackerPage = ({ currentUser, onLogout, onBack }: { currentUser: any, o
             priority: 'Major',
             type: 'Bug',
             status: 'OPEN',
+            stage: 'UAT',
             components: '',
             labels: '',
             attachments: '',
@@ -108,6 +111,7 @@ const BugTrackerPage = ({ currentUser, onLogout, onBack }: { currentUser: any, o
             priority: bug.priority || 'Major',
             type: bug.type || 'Bug',
             status: bug.status || 'OPEN',
+            stage: bug.stage || 'UAT', // Load stage from bug or default to UAT
             components: Array.isArray(bug.components) ? bug.components.join(', ') : '',
             labels: Array.isArray(bug.labels) ? bug.labels.join(', ') : '',
             attachments: Array.isArray(bug.attachments) ? bug.attachments : (bug.attachments ? bug.attachments.split(',') : []),
@@ -272,13 +276,15 @@ const BugTrackerPage = ({ currentUser, onLogout, onBack }: { currentUser: any, o
             for (let i = 0; i < 30; i++) {
                 const type = getRandomElement(ISSUE_TYPES);
                 const priority = getRandomElement(PRIORITIES);
-                const status = getRandomElement(STATUSES); // Use string to avoid enum import issues if any
+                const status = getRandomElement(STATUSES);
+                const stage = getRandomElement(STAGES); // Random stage
                 await api.createBug({
                     summary: `Dummy Bug ${i + 1} - ${new Date().toISOString().split('T')[0]}`,
-                    description: `Automatically generated dummy bug for testing. Priority: ${priority}, Status: ${status}.`,
+                    description: `Automatically generated dummy bug for testing. Priority: ${priority}, Status: ${status}, Stage: ${stage}.`,
                     priority,
                     type,
                     status,
+                    stage,
                     projectId: defaultProjectId,
                     components: 'Backend,Frontend',
                     labels: 'dummy,test',
@@ -735,6 +741,24 @@ const BugTrackerPage = ({ currentUser, onLogout, onBack }: { currentUser: any, o
                                                 OPEN
                                             </div>
                                         )}
+                                    </div>
+
+                                    {/* Stage Selection */}
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Stage</label>
+                                        <div className="relative">
+                                            <select
+                                                name="stage"
+                                                value={formData.stage}
+                                                onChange={(e) => setFormData({ ...formData, stage: e.target.value })}
+                                                className="w-full bg-[#22272b] border border-[#3c444d] rounded p-2.5 text-sm appearance-none outline-none focus:border-blue-500 text-gray-300"
+                                            >
+                                                {STAGES.map(s => (
+                                                    <option key={s} value={s}>{s}</option>
+                                                ))}
+                                            </select>
+                                            <ChevronDown size={16} className="absolute right-3 top-3 pointer-events-none text-gray-400" />
+                                        </div>
                                     </div>
 
                                     {/* Summary Input */}
