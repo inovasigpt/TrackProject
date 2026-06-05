@@ -337,6 +337,8 @@ function App() {
       setSuccessMessage('Proyek berhasil diperbarui!');
       setShowSuccessModal(true);
       refreshProjects(); // Refresh to get latest data (including correct user links)
+    } else {
+      throw new Error(result.error || 'Gagal memperbarui proyek');
     }
   };
 

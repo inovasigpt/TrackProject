@@ -11,7 +11,7 @@ interface EditProjectModalProps {
     project: Project | null;
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (project: Project) => void;
+    onSubmit: (project: Project) => Promise<void>;
 }
 
 const PROJECT_ICONS = [
@@ -37,6 +37,8 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({ project, isOpen, on
     const [documents, setDocuments] = useState<Document[]>([]);
     const [notes, setNotes] = useState('');
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const [apiError, setApiError] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [availablePhases, setAvailablePhases] = useState<any[]>([]); // Keep loose for external API data or define stricter if known
     const [availableRoles, setAvailableRoles] = useState<string[]>([]);
     const [availableUsers, setAvailableUsers] = useState<any[]>([]);
@@ -107,7 +109,8 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({ project, isOpen, on
                             phaseId: matchingParam ? matchingParam.id : p.id,
                             startDate: p.startDate ? new Date(p.startDate).toISOString().split('T')[0] : '',
                             endDate: p.endDate ? new Date(p.endDate).toISOString().split('T')[0] : '',
-                            progress: p.progress || 0
+                            progress: p.progress || 0,
+                            status: p.status || 'pending'
                         };
                     }) || []);
 
@@ -164,7 +167,7 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({ project, isOpen, on
         // I will coerce types here.
 
         const first = availablePhases.find(p => !phases.find((ph: any) => ph.phaseId === p.id));
-        if (first) setPhases([...phases, { id: '', phaseId: first.id, startDate: '', endDate: '', progress: 0 } as any]);
+        if (first) setPhases([...phases, { id: '', phaseId: first.id, startDate: '', endDate: '', progress: 0, status: 'pending' } as any]);
     };
     const removePhase = (i: number) => setPhases(phases.filter((_, idx) => idx !== i));
     const updatePhase = (i: number, field: string, value: any) => {
@@ -189,12 +192,25 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({ project, isOpen, on
             else if (new Date(phase.endDate!) <= new Date(phase.startDate!)) newErrors[`phase_${i}`] = 'End Date harus > Start Date';
         });
         setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
+        return { isValid: Object.keys(newErrors).length === 0, newErrors };
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!validateForm()) return;
+        setApiError('');
+        const { isValid, newErrors } = validateForm();
+        if (!isValid) {
+            // Show validation error summary if errors exist on other tabs
+            const hasNonActiveTabErrors = Object.keys(newErrors).some(key => {
+                if (key === 'pics') return activeTab !== 'pic';
+                if (key === 'phases' || key.startsWith('phase_')) return activeTab !== 'phase';
+                return false;
+            });
+            if (hasNonActiveTabErrors) {
+                setApiError('Ada field yang belum valid. Periksa tab PIC atau Phase.');
+            }
+            return;
+        }
 
         const validPics = pics.filter(p => p.name.trim()).map(p => ({
             ...p,
@@ -203,28 +219,36 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({ project, isOpen, on
         const validDocs = documents.filter(d => d.name.trim() && d.url.trim());
 
         if (project) {
-            onSubmit({
-                ...project,
-                code: formData.code.toUpperCase(),
-                name: formData.name,
-                description: formData.description,
-                priority: formData.priority,
-                status: formData.status,
-                stream: formData.stream,
-                icon: formData.icon,
-                pics: validPics,
-                pic: validPics[0] || project.pic,
-                phases: phases.map((p: any) => ({
-                    id: p.id, // keep original instance ID if exists
-                    phaseId: p.phaseId, // keep parameter ID reference
-                    name: availablePhases.find(ap => ap.id === p.phaseId)?.label || p.name,
-                    progress: p.progress || 0,
-                    startDate: p.startDate,
-                    endDate: p.endDate
-                })),
-                documents: validDocs,
-                notes: notes,
-            });
+            setIsSubmitting(true);
+            try {
+                await onSubmit({
+                    ...project,
+                    code: formData.code.toUpperCase(),
+                    name: formData.name,
+                    description: formData.description,
+                    priority: formData.priority,
+                    status: formData.status,
+                    stream: formData.stream,
+                    icon: formData.icon,
+                    pics: validPics,
+                    pic: validPics[0] || project.pic,
+                    phases: phases.map((p: any) => ({
+                        id: p.id, // keep original instance ID if exists
+                        phaseId: p.phaseId, // keep parameter ID reference
+                        name: availablePhases.find(ap => ap.id === p.phaseId)?.label || p.name,
+                        progress: p.progress || 0,
+                        status: p.status || 'pending',
+                        startDate: p.startDate,
+                        endDate: p.endDate
+                    })),
+                    documents: validDocs,
+                    notes: notes,
+                });
+            } catch (err: any) {
+                setApiError(err.message || 'Gagal menyimpan perubahan. Coba lagi.');
+            } finally {
+                setIsSubmitting(false);
+            }
         }
     };
 
@@ -328,7 +352,7 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({ project, isOpen, on
                                         <div className="relative">
                                             <select value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                                                 className="w-full bg-[#020617] border border-[#1e293b] rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 appearance-none cursor-pointer">
-                                                {availableStatuses.map(s => <option key={s.id} value={s.label}>{s.label}</option>)}
+                                                {availableStatuses.map(s => <option key={s.id} value={s.value}>{s.label}</option>)}
                                             </select>
                                             <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
                                         </div>
@@ -491,15 +515,22 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({ project, isOpen, on
                     </div>
 
                     {/* Footer */}
-                    <div className="p-4 border-t border-[#1e293b] flex gap-3 shrink-0">
-                        <div className="flex-1"></div>
+                    <div className="p-4 border-t border-[#1e293b] flex gap-3 shrink-0 items-center">
+                        <div className="flex-1">
+                            {apiError && (
+                                <div className="flex items-center gap-1.5 text-rose-400 text-[10px] font-bold">
+                                    <AlertCircle size={12} />
+                                    <span>{apiError}</span>
+                                </div>
+                            )}
+                        </div>
                         <button type="button" onClick={onClose}
                             className="h-11 px-6 bg-transparent hover:bg-slate-800 text-slate-400 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all">
                             Batal
                         </button>
-                        <button type="submit"
-                            className="h-11 px-6 bg-amber-500 text-[#020617] text-[10px] font-black uppercase tracking-widest rounded-xl hover:brightness-110 shadow-lg shadow-amber-500/20 transition-all flex items-center gap-2">
-                            <Check size={16} strokeWidth={3} /> Simpan
+                        <button type="submit" disabled={isSubmitting}
+                            className="h-11 px-6 bg-amber-500 text-[#020617] text-[10px] font-black uppercase tracking-widest rounded-xl hover:brightness-110 shadow-lg shadow-amber-500/20 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <Check size={16} strokeWidth={3} /> {isSubmitting ? 'Menyimpan...' : 'Simpan'}
                         </button>
                     </div>
                 </form>
