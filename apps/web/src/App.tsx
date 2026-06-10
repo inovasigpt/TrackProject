@@ -23,6 +23,7 @@ import {
 import Sidebar from './components/Sidebar';
 import Timeline from './components/Timeline';
 import AuditSlideOver from './components/AuditSlideOver';
+import TodoSlideOver from './components/TodoSlideOver';
 import AddProjectModal from './components/modals/AddProjectModal';
 import EditPhaseModal from './components/modals/EditPhaseModal';
 import ProjectDetailModal from './components/modals/ProjectDetailModal';
@@ -47,7 +48,6 @@ import {
   ScenarioDashboardPage
 } from './pages';
 import BugTrackerPage from './pages/BugTrackerPage';
-import TodoPage from './pages/TodoPage';
 
 // Hooks
 import { useProjectData } from './hooks/useProjectData';
@@ -91,7 +91,7 @@ function App() {
   const profileDropdownRef = useRef<HTMLDivElement>(null);
 
   // Navigation State
-  const [currentView, setCurrentView] = useState<'dashboard' | 'bugtracker' | 'scenarios' | 'scenario-dashboard' | 'todos'>('todos');
+  const [currentView, setCurrentView] = useState<'dashboard' | 'bugtracker' | 'scenarios' | 'scenario-dashboard'>('dashboard');
 
   // Check URL for reset token
   useEffect(() => {
@@ -141,6 +141,7 @@ function App() {
   const [isArchivedOpen, setIsArchivedOpen] = useState(false);
   const [isOverviewOpen, setIsOverviewOpen] = useState(false);
   const [isInboxOpen, setIsInboxOpen] = useState(false);
+  const [isTodoOpen, setIsTodoOpen] = useState(false);
   const [selectedPhase, setSelectedPhase] = useState<{ project: Project; phase: Phase; info: any } | null>(null);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -257,9 +258,11 @@ function App() {
         setSelectedProject(null);
       } else if (isAuditOpen) {
         setIsAuditOpen(false);
+      } else if (isTodoOpen) {
+        setIsTodoOpen(false);
       }
     }
-  }, [showProfileDropdown, showChangePassword, showUserApproval, isInboxOpen, isOverviewOpen, isArchivedOpen, editingProject, isAddProjectModalOpen, isSettingsOpen, isFilterOpen, selectedPhase, selectedProject, isAuditOpen]);
+  }, [showProfileDropdown, showChangePassword, showUserApproval, isInboxOpen, isOverviewOpen, isArchivedOpen, editingProject, isAddProjectModalOpen, isSettingsOpen, isFilterOpen, selectedPhase, selectedProject, isAuditOpen, isTodoOpen]);
 
   useEffect(() => {
     document.addEventListener('keydown', handleKeyDown);
@@ -461,17 +464,6 @@ function App() {
     }
   }
 
-  // Todo List Page
-  if (currentView === 'todos') {
-    return (
-      <TodoPage
-        currentUser={currentUser}
-        onLogout={handleLogout}
-        onBack={() => setCurrentView('dashboard')}
-      />
-    );
-  }
-
   // Bug Tracker Page
   if (currentView === 'bugtracker') {
     return (
@@ -576,6 +568,7 @@ function App() {
               setIsOverviewOpen(!isOverviewOpen);
               setIsInboxOpen(false);
               setIsAuditOpen(false);
+              setIsTodoOpen(false);
             }}
             className={`p-2 hover:bg-[#1e293b] rounded-lg transition-colors ${isOverviewOpen ? 'text-[#26b9f7]' : 'text-slate-400'}`}
             title="Ringkasan Hari Ini"
@@ -607,6 +600,7 @@ function App() {
               setIsAuditOpen(!isAuditOpen);
               setIsOverviewOpen(false);
               setIsInboxOpen(false);
+              setIsTodoOpen(false);
             }}
             className={`p-2 hover:bg-[#1e293b] rounded-lg transition-colors ${isAuditOpen ? 'text-[#26b9f7]' : 'text-slate-400'}`}
           >
@@ -615,8 +609,13 @@ function App() {
 
           {/* Todo List Button */}
           <button
-            onClick={() => setCurrentView('todos')}
-            className={`p-2 hover:bg-[#1e293b] rounded-lg transition-colors ${currentView === 'todos' ? 'text-emerald-400' : 'text-slate-400'}`}
+            onClick={() => {
+              setIsTodoOpen(!isTodoOpen);
+              setIsAuditOpen(false);
+              setIsOverviewOpen(false);
+              setIsInboxOpen(false);
+            }}
+            className={`p-2 hover:bg-[#1e293b] rounded-lg transition-colors ${isTodoOpen ? 'text-emerald-400' : 'text-slate-400'}`}
             title="Todo List"
           >
             <ListTodo size={20} />
@@ -809,6 +808,12 @@ function App() {
           onClose={() => setIsInboxOpen(false)}
           messages={messages}
           onMarkAsRead={markMessageAsRead}
+        />
+
+        {/* Todo Slide-over */}
+        <TodoSlideOver
+          isOpen={isTodoOpen}
+          onClose={() => setIsTodoOpen(false)}
         />
       </main>
 

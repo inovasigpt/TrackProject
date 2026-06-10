@@ -5,4 +5,3 @@ export { default as ResetPasswordPage } from './ResetPasswordPage';
 export { default as UserApprovalPage } from './UserApprovalPage';
 export { default as ScenarioPage } from './ScenarioPage';
 export { default as ScenarioDashboardPage } from './ScenarioDashboardPage';
-export { default as TodoPage } from './TodoPage';
