@@ -86,12 +86,14 @@ const TodoSlideOver: React.FC<TodoSlideOverProps> = ({ isOpen, onClose }) => {
             return;
         }
 
-        const payload = {
+        const payload: Record<string, any> = {
             title: formData.title.trim(),
             description: formData.description.trim(),
             priority: formData.priority,
-            dueDate: formData.dueDate || null,
         };
+        if (formData.dueDate) {
+            payload.dueDate = formData.dueDate;
+        }
 
         try {
             if (editingTodo) {

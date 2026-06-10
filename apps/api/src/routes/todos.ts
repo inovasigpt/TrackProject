@@ -49,7 +49,7 @@ const createSchema = z.object({
     description: z.string().optional(),
     status: z.string().optional(),
     priority: z.string().optional(),
-    dueDate: z.string().optional(),
+    dueDate: z.string().optional().nullable(),
 });
 
 app.post('/', zValidator('json', createSchema), async (c) => {
