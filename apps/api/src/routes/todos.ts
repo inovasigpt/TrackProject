@@ -61,7 +61,7 @@ app.post('/', zValidator('json', createSchema), async (c) => {
             ...body,
             userId: user.userId,
             dueDate: body.dueDate ? new Date(body.dueDate) : null,
-        }).returning();
+        } as any).returning();
 
         await auditService.log(user.userId, 'CREATE', 'TODO' as any, newItem.id, `Created todo: ${newItem.title}`);
 
@@ -93,7 +93,7 @@ app.patch('/:id', zValidator('json', updateSchema), async (c) => {
                 ...body,
                 dueDate: body.dueDate ? new Date(body.dueDate) : undefined,
                 updatedAt: new Date(),
-            })
+            } as any)
             .where(eq(todos.id, id))
             .returning();
 

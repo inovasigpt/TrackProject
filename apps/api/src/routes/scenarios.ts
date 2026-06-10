@@ -64,7 +64,7 @@ app.patch('/:id', zValidator('json', updateSchema), async (c) => {
     
     try {
         const [updatedItem] = await db.update(scenarios)
-            .set({ ...body, updatedAt: new Date() })
+            .set({ ...body, updatedAt: new Date() } as any)
             .where(eq(scenarios.id, id))
             .returning();
             
