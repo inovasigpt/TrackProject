@@ -14,6 +14,7 @@ import auditRoutes from './routes/audit.js';
 import bugRoutes from './routes/bugs.js';
 import uploadRoutes from './routes/upload.js';
 import scenarioRoutes from './routes/scenarios.js';
+import todoRoutes from './routes/todos.js';
 
 
 const app = new Hono().basePath('/api');
@@ -80,6 +81,7 @@ app.route('/audit', auditRoutes);
 app.route('/bugs', bugRoutes);
 app.route('/upload', uploadRoutes);
 app.route('/scenarios', scenarioRoutes);
+app.route('/todos', todoRoutes);
 
 // Error handler
 app.onError((err, c) => {

@@ -193,3 +193,26 @@ export const scenariosRelations = relations(scenarios, ({ one }) => ({
 
 export type Scenario = typeof scenarios.$inferSelect;
 export type NewScenario = typeof scenarios.$inferInsert;
+
+// Todos table
+export const todos = pgTable('todos', {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+    title: text('title').notNull(),
+    description: text('description'),
+    status: text('status').default('pending').notNull(),
+    priority: text('priority').default('Medium').notNull(),
+    dueDate: timestamp('due_date'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const todosRelations = relations(todos, ({ one }) => ({
+    user: one(users, {
+        fields: [todos.userId],
+        references: [users.id],
+    }),
+}));
+
+export type Todo = typeof todos.$inferSelect;
+export type NewTodo = typeof todos.$inferInsert;

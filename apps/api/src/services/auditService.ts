@@ -7,7 +7,7 @@ export const auditService = {
     log: async (
         userId: string | null,
         action: string,
-        entityType: 'PROJECT' | 'PHASE' | 'BUG',
+        entityType: 'PROJECT' | 'PHASE' | 'BUG' | 'TODO',
         entityId: string,
         details: string
     ) => {

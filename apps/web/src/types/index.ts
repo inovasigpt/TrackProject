@@ -102,3 +102,15 @@ export interface Scenario {
     updatedAt?: string;
     createdAt: string;
 }
+
+export interface Todo {
+    id: string;
+    userId: string;
+    title: string;
+    description?: string;
+    status: string;
+    priority: string;
+    dueDate?: string;
+    createdAt: string;
+    updatedAt: string;
+}

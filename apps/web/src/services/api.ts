@@ -261,6 +261,32 @@ class ApiClient {
             method: 'DELETE',
         });
     }
+
+    // Todos
+    async getTodos(params?: { status?: string; priority?: string; sort?: string }) {
+        const query = params ? '?' + new URLSearchParams(params as any).toString() : '';
+        return this.request<{ success: boolean; data: any[] }>(`/todos${query}`);
+    }
+
+    async createTodo(todo: any) {
+        return this.request<{ success: boolean; data: any }>('/todos', {
+            method: 'POST',
+            body: todo,
+        });
+    }
+
+    async updateTodo(id: string, updates: any) {
+        return this.request<{ success: boolean; data: any }>(`/todos/${id}`, {
+            method: 'PATCH',
+            body: updates,
+        });
+    }
+
+    async deleteTodo(id: string) {
+        return this.request<{ success: boolean }>(`/todos/${id}`, {
+            method: 'DELETE',
+        });
+    }
 }
 
 export const api = new ApiClient(API_URL);

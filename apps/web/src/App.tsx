@@ -16,6 +16,7 @@ import {
   ClipboardCheck,
   Settings,
   ChevronDown,
+  ListTodo,
 } from 'lucide-react';
 
 // Components
@@ -46,6 +47,7 @@ import {
   ScenarioDashboardPage
 } from './pages';
 import BugTrackerPage from './pages/BugTrackerPage';
+import TodoPage from './pages/TodoPage';
 
 // Hooks
 import { useProjectData } from './hooks/useProjectData';
@@ -89,7 +91,7 @@ function App() {
   const profileDropdownRef = useRef<HTMLDivElement>(null);
 
   // Navigation State
-  const [currentView, setCurrentView] = useState<'dashboard' | 'bugtracker' | 'scenarios' | 'scenario-dashboard'>('dashboard');
+  const [currentView, setCurrentView] = useState<'dashboard' | 'bugtracker' | 'scenarios' | 'scenario-dashboard' | 'todos'>('todos');
 
   // Check URL for reset token
   useEffect(() => {
@@ -459,6 +461,17 @@ function App() {
     }
   }
 
+  // Todo List Page
+  if (currentView === 'todos') {
+    return (
+      <TodoPage
+        currentUser={currentUser}
+        onLogout={handleLogout}
+        onBack={() => setCurrentView('dashboard')}
+      />
+    );
+  }
+
   // Bug Tracker Page
   if (currentView === 'bugtracker') {
     return (
@@ -598,6 +611,15 @@ function App() {
             className={`p-2 hover:bg-[#1e293b] rounded-lg transition-colors ${isAuditOpen ? 'text-[#26b9f7]' : 'text-slate-400'}`}
           >
             <History size={20} />
+          </button>
+
+          {/* Todo List Button */}
+          <button
+            onClick={() => setCurrentView('todos')}
+            className={`p-2 hover:bg-[#1e293b] rounded-lg transition-colors ${currentView === 'todos' ? 'text-emerald-400' : 'text-slate-400'}`}
+            title="Todo List"
+          >
+            <ListTodo size={20} />
           </button>
 
           <div className="w-px h-6 bg-[#1e293b] mx-1"></div>
